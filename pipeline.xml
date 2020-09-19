@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This is an example file of a compi pipeline -->
+<pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<version>1.0.0</version>
+
+	<params>
+		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
+		<param name="working_dir" shortName="w" global="true" defaultValue="/working_dir">Path of the working directory.</param>
+		<param name="input_dir" shortName="id" global="true" defaultValue="/input">Path of the directory containing the input FASTA files.</param>
+		<param name="scripts_dir" shortName="sd" global="true" defaultValue="/opt/scripts/">Path of the directory containing the pipeline scripts.</param>
+		
+		<param name="sequence_limit" shortName="sl" defaultValue="20">The maximum number of sequences to use.</param>
+		<param name="random_seed" shortName="rs" defaultValue="100">The random seed.</param>
+		<param name="align_method" shortName="am" defaultValue="muscle">The alignment method: clustalw, muscle, kalign, t_coffee, or amap.</param>
+		<param name="tcoffee_min_score" shortName="tms" defaultValue="3">Minimum support value for columns.</param>
+		
+		<param name="fubar_sequence_limit" shortName="fsl" defaultValue="8">The maximum number of sequences to use in FUBAR.</param>
+		<param name="omegamap_sequence_limit" shortName="osl" defaultValue="7">The maximum number of sequences to use in OmegaMap.</param>
+		<param name="codeml_sequence_limit" shortName="csl" defaultValue="6">The maximum number of sequences to use in codeML.</param>
+		<param name="fubar_runs" shortName="fr" defaultValue="2">The number of FUBAR runs.</param>
+		<param name="omegamap_runs" shortName="or" defaultValue="2">The number of OmegaMap runs.</param>
+		<param name="codeml_runs" shortName="cr" defaultValue="2">The number of codeML runs.</param>
+		
+		<param name="mrbayes_generations" shortName="mbg" defaultValue="1000000"></param>
+		<param name="mrbayes_burnin" shortName="mbb" defaultValue="2500"></param>
+		<param name="mrbayes_model" shortName="mbm" defaultValue="6"></param>
+		<param name="mrbayes_rates" shortName="mbr" defaultValue="invgamma"></param>
+		<param name="codeml_models" shortName="cmm" defaultValue="1 2 7 8"></param>
+
+		<flag name="omegamap_recomb" shortName="ore">Runs OmegaMap only if recombination is detected in the master file.</flag>
+		<param name="omegamap_iterations" shortName="oi" defaultValue="2500">Number of OmegaMap iterations.</param>
+
+		<flag name="skip_pull_docker_images" shortName="sdi">Use this flag to skip the pull-docker-images task.</flag>
+		<param name="version_utilities" shortName="vu" defaultValue="0.9.0" global="true">Version of the pegi3s/utilities to use.</param>
+		<param name="version_tcoffee" shortName="vt" defaultValue="12.00.7" global="true">Version of the pegi3s/tcoffee to use.</param>
+		<param name="version_alter" shortName="va" defaultValue="1.3.4" global="true">Version of the pegi3s/alter to use.</param>
+		<param name="version_seqkit" shortName="vs" defaultValue="0.12.0" global="true">Version of the pegi3s/seqkit to use.</param>
+		<param name="version_mrbayes" shortName="vm" defaultValue="3.2.6" global="true">Version of the pegi3s/mrbayes to use.</param>
+		<param name="version_phipack" shortName="vp" defaultValue="latest" global="true">Version of the pegi3s/phipack to use.</param>
+		<param name="version_omegamap" shortName="vo" defaultValue="latest" global="true">Version of the pegi3s/omegamap to use.</param>
+		<param name="version_hyphy" shortName="vh" defaultValue="2.3.14" global="true">Version of the pegi3s/hyphy to use.</param>
+		<param name="version_paml" shortName="vpa" defaultValue="4.9" global="true">Version of the pegi3s/paml to use.</param>
+	</params>
+
+	<tasks>
+		<task id="pull-docker-images" params="skip_pull_docker_images" if="[ -v ${skip_pull_docker_images} ]">
+			docker pull pegi3s/utilities:${version_utilities}
+			docker pull pegi3s/tcoffee:${version_tcoffee}
+			docker pull pegi3s/alter:${version_alter}
+			docker pull pegi3s/seqkit:${version_seqkit}
+			docker pull pegi3s/mrbayes:${version_mrbayes}
+			docker pull pegi3s/phipack:${version_phipack}
+			docker pull pegi3s/omegamap:${version_omegamap}
+			docker pull pegi3s/hyphy:${version_hyphy}
+			docker pull pegi3s/paml:${version_paml}
+		</task>
+
+		<task id="initialization" after="pull-docker-images">
+			rm -rf ${working_dir}/input/*
+
+			mkdir -p ${working_dir}/input/1_original ${working_dir}/input/2_modified ${working_dir}/input/3_renamed_headers ${working_dir}/input/4_subsets ${working_dir}/input/5_translated ${working_dir}/input/6_aligned ${working_dir}/input/7_backtranslated ${working_dir}/input/8_master_alignment ${working_dir}/input/9_master_alignment_renamed
+
+			mkdir -p ${working_dir}/input/10_gapped_alignment/1_alignment ${working_dir}/input/10_gapped_alignment/2_gapped_alignment ${working_dir}/input/10_gapped_alignment/3_backtranslated ${working_dir}/input/10_gapped_alignment/4_fasta
+
+			cp ${input_dir}/* ${working_dir}/input/1_original
+			cp ${input_dir}/* ${working_dir}/input/2_modified
+
+			mkdir -p ${working_dir}/pss_subsets ${working_dir}/run_lists ${working_dir}/results/tabulated
+		</task>
+
+		<task id="prepare-input-files" after="initialization">
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} bash -c "batch_fasta_remove_stop_codons /data/input/2_modified/*"
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} bash -c "batch_fasta_remove_line_breaks /data/input/2_modified/*"
+		</task>
+
+		<foreach id="check-input-files" after="prepare-input-files" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+
+			${scripts_dir}/check_ambiguous_positions.sh $file
+			if [ ! $? -eq 0 ]; then
+				echo "Error: $FILENAME contains ambiguous nucleotide positions, which are not allowed. Fix this issue and resume the pipeline execution."
+				exit 1
+			fi
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} check_multiple_3 /data/input/2_modified/$FILENAME
+			if [ ! $? -eq 0 ]; then
+				echo "Error: $FILENAME contains non-multiple of 3 sequences, which are not allowed. Fix this issue and resume the pipeline execution."
+				exit 1
+			fi
+		</foreach>
+
+		<foreach id="rename-headers" after="*check-input-files" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			
+			${scripts_dir}/replace_and_save_headers.sh $file ${working_dir}/input/3_renamed_headers
+		</foreach>
+
+		<foreach id="create-subset" after="*rename-headers" of="command" in="ls ${working_dir}/input/2_modified/*" as="file" params="sequence_limit random_seed">
+			FILENAME=$(basename -- "${file}")
+
+			${scripts_dir}/create_subset.sh ${FILENAME}.renamed ${working_dir}/input/3_renamed_headers ${working_dir}/input/4_subsets ${sequence_limit} 1 ${random_seed}
+			mv ${working_dir}/input/4_subsets/${FILENAME}.renamed.1 ${working_dir}/input/4_subsets/${FILENAME}
+		</foreach>
+
+		<foreach id="translate-dna-to-protein" after="*create-subset" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/tcoffee:${version_tcoffee} t_coffee -other_pg seq_reformat -in /data/input/4_subsets/${FILENAME} -action +translate -output fasta_seq > ${working_dir}/input/5_translated/$FILENAME
+		</foreach>
+
+		<foreach id="align-protein-sequences" after="*translate-dna-to-protein" of="command" in="ls ${working_dir}/input/2_modified/*" as="file" params="align_method">
+			FILENAME=$(basename -- "${file}")
+
+			lowercase_align_method=$(echo ${align_method} | tr "[:upper:]" "[:lower:]")
+
+			case ${lowercase_align_method} in
+				"clustalw" )
+					lowercase_align_method=clustalw_msa ;;
+				"muscle" )
+					lowercase_align_method=muscle_msa ;;
+				"kalign" )
+					lowercase_align_method=kalign_msa ;;
+				"t_coffee" )
+					lowercase_align_method=t_coffee_msa ;;
+				"amap" )
+					lowercase_align_method=amap_msa ;;
+				* )
+					echo "Unknown alignment program ${lowercase_align_method}."
+					exit 1
+					;;
+			esac
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee /data/input/5_translated/${FILENAME} -method=${lowercase_align_method} -output=aln,fasta_aln,html -run_name /data/input/6_aligned/${FILENAME}
+		</foreach>
+
+		<foreach id="back-translation" after="*align-protein-sequences" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee -other_pg seq_reformat -in /data/input/4_subsets/${FILENAME} -in2 /data/input/6_aligned/${FILENAME_WITHOUT_EXT}.aln -action +thread_dna_on_prot_aln -output clustalw > ${working_dir}/input/7_backtranslated/${FILENAME_WITHOUT_EXT}.backtranslated.aln
+		</foreach>
+		
+		<foreach id="clustal-to-fasta" after="*back-translation" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/alter:${version_alter} -i /data/input/7_backtranslated/${FILENAME_WITHOUT_EXT}.backtranslated.aln -o /data/input/8_master_alignment/${FILENAME} -ia -of FASTA -oo Linux -op GENERAL
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} fasta_remove_line_breaks /data/input/8_master_alignment/${FILENAME}
+		</foreach>
+		
+		<foreach id="rename-headers-back" after="*clustal-to-fasta" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+
+			${scripts_dir}/put_headers_back.sh ${working_dir}/input/8_master_alignment/${FILENAME} ${working_dir}/input/3_renamed_headers/${FILENAME}.headers_map ${working_dir}/input/9_master_alignment_renamed/${FILENAME}
+		</foreach>
+		
+		<foreach id="phipack-master-alignment" after="*clustal-to-fasta" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+			rm -rf ${working_dir}/input/results/master_alignment/phipack/${FILENAME}
+			mkdir -p ${working_dir}/input/results/master_alignment/phipack/${FILENAME}
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/phipack:${version_phipack} bash -c "Phi -f /data/input/8_master_alignment/${FILENAME} -p 1000 -w 80 -o > /data/input/results/master_alignment/phipack/${FILENAME}/phipack.log"
+
+			if [ $? -eq 0 ]; then
+				${scripts_dir}/phipack_check_evidence.sh ${working_dir}/input/results/master_alignment/phipack/${FILENAME} phipack.log
+			fi
+		</foreach>
+		
+		<foreach id="check-master-alignment-recombination" after="*phipack-master-alignment,*create-pss-subsets" of="command" in="ls ${working_dir}/input/2_modified/*" as="file" params="omegamap_recomb">
+			FILENAME=$(basename -- "${file}")
+			
+			if [ ! -z ${omegamap_recomb} ]; then
+				count=$(cat ${working_dir}/input/results/master_alignment/phipack/${FILENAME}/phipack.log.summary | grep "^No evidence" | wc -l)
+				if [ $count -eq 1 ]; then
+					rm -rf ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta
+				fi
+			fi
+
+			if [ -d ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta ]; then
+				mkdir -p ${working_dir}/pss_subsets/${FILENAME}/run_lists
+
+				rm -f ${working_dir}/pss_subsets/${FILENAME}/run_lists/omegamap
+				touch ${working_dir}/pss_subsets/${FILENAME}/run_lists/omegamap
+
+				for SUBSET in $(ls ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta); do
+					echo "${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap,$SUBSET" >> ${working_dir}/pss_subsets/${FILENAME}/run_lists/omegamap
+				done 
+			fi
+		</foreach>
+		
+		<foreach id="rename-headers-pss-subsets" after="*check-master-alignment-recombination" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			
+			for METHOD in fubar codeml; do
+				if [ -d ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta ]; then
+					rm -rf ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta_renamed
+					mkdir -p ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta_renamed
+					
+					for SUBSET in $(ls ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta); do
+						${scripts_dir}/put_headers_back.sh ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta/${SUBSET} ${working_dir}/input/3_renamed_headers/${FILENAME}.headers_map ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta_renamed/${SUBSET}
+					done 
+				fi			
+			done
+		</foreach>
+
+		<task id="gather-omegamap-run-lists" after="check-master-alignment-recombination">
+			rm -f ${working_dir}/run_lists/omegamap
+			cat ${working_dir}/pss_subsets/*/run_lists/omegamap > ${working_dir}/run_lists/omegamap
+		</task>
+
+		<foreach id="run-omegamap" after="gather-omegamap-run-lists" of="command" in="cat ${working_dir}/run_lists/omegamap" as="line" params="omegamap_iterations">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}\/##g")
+
+			rm -rf ${FILE_PATH}/results/${FILENAME}
+			mkdir -p ${FILE_PATH}/results/${FILENAME}
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/omegamap:${version_omegamap} analyze /data/${FILE_PATH_DOCKER}/fasta/${FILENAME} /data/${FILE_PATH_DOCKER}/results/${FILENAME} ${omegamap_iterations}
+			
+			${scripts_dir}/omegamap_process_results.sh ${FILE_PATH}/results/${FILENAME} ${FILENAME}
+		</foreach>
+
+		<foreach id="create-pss-subsets" after="*clustal-to-fasta" of="command" in="ls ${working_dir}/input/2_modified/*" as="file" params="omegamap_sequence_limit fubar_sequence_limit codeml_sequence_limit omegamap_runs fubar_runs codeml_runs random_seed">
+			FILENAME=$(basename -- "${file}")
+
+			rm -rf ${working_dir}/pss_subsets/${FILENAME}
+			mkdir -p ${working_dir}/pss_subsets/${FILENAME}/original_alignment/fubar/fasta
+			
+			${scripts_dir}/create_subset.sh ${FILENAME} ${working_dir}/input/8_master_alignment ${working_dir}/pss_subsets/${FILENAME}/original_alignment/fubar/fasta ${fubar_sequence_limit} ${fubar_runs} ${random_seed}
+
+			mkdir -p ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta
+			
+			${scripts_dir}/create_subset.sh ${FILENAME} ${working_dir}/input/8_master_alignment ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta ${omegamap_sequence_limit} ${omegamap_runs} ${random_seed}
+
+			mkdir -p ${working_dir}/pss_subsets/${FILENAME}/original_alignment/codeml/fasta
+			
+			${scripts_dir}/create_subset.sh ${FILENAME} ${working_dir}/input/8_master_alignment ${working_dir}/pss_subsets/${FILENAME}/original_alignment/codeml/fasta ${codeml_sequence_limit} ${codeml_runs} ${random_seed}
+		</foreach>
+
+		<foreach id="mrbayes-filter-alignment" after="*align-protein-sequences" of="command" in="ls ${working_dir}/input/2_modified/*" as="file" params="tcoffee_min_score">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+			
+			cp ${working_dir}/input/6_aligned/${FILENAME_WITHOUT_EXT}.aln ${working_dir}/input/10_gapped_alignment/1_alignment/${FILENAME_WITHOUT_EXT}.aln
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee -infile /data/input/10_gapped_alignment/1_alignment/${FILENAME_WITHOUT_EXT}.aln -evaluate -output tcs_column_filter${tcoffee_min_score} -run_name /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}
+
+			mv ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.tcs_column_filter${tcoffee_min_score} ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln
+		</foreach>
+
+		<foreach id="mrbayes-back-translation" after="*mrbayes-filter-alignment" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/alter:${version_alter} -i /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln -o /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln.converted -ia -of ALN -oo Linux -op TCoffee
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee -other_pg seq_reformat -in /data/input/4_subsets/${FILENAME} -in2 /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln.converted -action +thread_dna_on_prot_aln -output clustalw > ${working_dir}/input/10_gapped_alignment/3_backtranslated/${FILENAME_WITHOUT_EXT}.aln
+		</foreach>
+		
+		<foreach id="mrbayes-clustal-to-fasta" after="*mrbayes-back-translation" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+			docker run --rm -v ${host_working_dir}:/data pegi3s/alter:${version_alter} -i /data/input/10_gapped_alignment/3_backtranslated/${FILENAME_WITHOUT_EXT}.aln -o /data/input/10_gapped_alignment/4_fasta/${FILENAME_WITHOUT_EXT}.fasta -ia -of FASTA -oo Linux -op GENERAL
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} fasta_remove_line_breaks /data/input/10_gapped_alignment/4_fasta/${FILENAME_WITHOUT_EXT}.fasta
+		</foreach>
+
+		<foreach id="mrbayes-create-pss-subsets" after="*create-pss-subsets,*mrbayes-clustal-to-fasta" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+
+			mkdir -p ${working_dir}/pss_subsets/${FILENAME}/run_lists
+
+			rm -rf ${working_dir}/pss_subsets/${FILENAME}/gapped_alignment
+			
+			rm -f ${working_dir}/pss_subsets/${FILENAME}/run_lists/mrbayes
+			touch ${working_dir}/pss_subsets/${FILENAME}/run_lists/mrbayes
+			
+			for METHOD in fubar codeml; do
+				mkdir -p ${working_dir}/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta
+
+				for SUBSET in $(ls ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta); do
+					cat ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta/${SUBSET}| grep '>' | sed -e 's/>//g' > ${working_dir}/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_${SUBSET}
+					
+					docker run --rm -v ${host_working_dir}/:/data pegi3s/seqkit:${version_seqkit} grep -f /data/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_${SUBSET} /data/input/10_gapped_alignment/4_fasta/${FILENAME_WITHOUT_EXT}.fasta -o /data/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/${SUBSET}
+					
+					rm ${working_dir}/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_*
+					
+					echo "${working_dir}/pss_subsets/${FILENAME}/gapped_alignment/${METHOD},$SUBSET" >> ${working_dir}/pss_subsets/${FILENAME}/run_lists/mrbayes
+				done 
+			done
+		</foreach>
+
+		<task id="gather-mrbayes-run-lists" after="mrbayes-create-pss-subsets">
+			rm -f ${working_dir}/run_lists/mrbayes
+			cat ${working_dir}/pss_subsets/*/run_lists/mrbayes > ${working_dir}/run_lists/mrbayes
+		</task>
+
+		<foreach id="prepare-mrbayes-files" after="gather-mrbayes-run-lists" of="command" in="cat ${working_dir}/run_lists/mrbayes" as="line" params="mrbayes_generations mrbayes_burnin mrbayes_model mrbayes_rates">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
+
+			rm -rf ${FILE_PATH}/mrbayes/${FILENAME}
+			mkdir -p ${FILE_PATH}/mrbayes/${FILENAME}
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/alter:${version_alter} -i /data/${FILE_PATH_DOCKER}/fasta/${FILENAME} -o /data/${FILE_PATH_DOCKER}/mrbayes/${FILENAME}/${FILENAME}.nex -ia -of NEXUS -oo Linux -op MrBayes
+			
+			${scripts_dir}/mrbayes_append_nexus_file.sh ${FILE_PATH}/mrbayes/${FILENAME}/${FILENAME}.nex ${mrbayes_generations} ${mrbayes_burnin} ${mrbayes_model} ${mrbayes_rates}
+		</foreach>
+		
+		<foreach id="run-mrbayes" after="*prepare-mrbayes-files" of="command" in="cat ${working_dir}/run_lists/mrbayes" as="line">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
+
+			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/mrbayes/${FILENAME}/:/data pegi3s/mrbayes:${version_mrbayes} mb /data/${FILENAME}.nex
+
+			${scripts_dir}/mrbayes_get_tree.sh ${FILENAME}.nex.con.tre ${FILE_PATH}/mrbayes/${FILENAME}
+		</foreach>
+
+		<foreach id="create-fubar-codeml-run-lists" after="run-mrbayes" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+
+			mkdir -p ${working_dir}/pss_subsets/${FILENAME}/run_lists
+
+			for METHOD in fubar codeml; do
+				rm -f ${working_dir}/pss_subsets/${FILENAME}/run_lists/${METHOD}
+				touch ${working_dir}/pss_subsets/${FILENAME}/run_lists/${METHOD}
+
+				for SUBSET in $(ls ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta); do
+					echo "${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD},$SUBSET" >> ${working_dir}/pss_subsets/${FILENAME}/run_lists/${METHOD}
+				done
+			done
+		</foreach>
+		
+		<task id="gather-fubar-codeml-run-lists" after="create-fubar-codeml-run-lists">
+			rm -f ${working_dir}/run_lists/fubar
+			cat ${working_dir}/pss_subsets/*/run_lists/fubar > ${working_dir}/run_lists/fubar
+
+			rm -f ${working_dir}/run_lists/codeml
+			cat ${working_dir}/pss_subsets/*/run_lists/codeml > ${working_dir}/run_lists/codeml
+		</task>
+
+		<foreach id="run-fubar" after="gather-fubar-codeml-run-lists" of="command" in="cat ${working_dir}/run_lists/fubar" as="line">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
+			
+			rm -rf ${FILE_PATH}/results/${FILENAME}
+			mkdir -p ${FILE_PATH}/results/${FILENAME}
+			
+			MR_BAYES_PATH=$(echo ${FILE_PATH} | sed 's/original_alignment/gapped_alignment/g')
+			
+			${scripts_dir}/fubar_prepare_input.sh ${FILENAME} ${FILE_PATH}/fasta ${MR_BAYES_PATH}/mrbayes/${FILENAME}/mrbayes_tree_without_branch_lengths.tre ${FILE_PATH}/results/${FILENAME}
+
+			${scripts_dir}/fubar_create_hyphy_setttings_file.sh ${FILE_PATH}/results/${FILENAME}/HYPHY_settings "/data/${FILE_PATH_DOCKER}/results/${FILENAME}/${FILENAME}.fna"
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/hyphy:${version_hyphy} bash -c "cat /data/${FILE_PATH_DOCKER}/results/${FILENAME}/HYPHY_settings | HYPHYMP > /data/${FILE_PATH_DOCKER}/results/${FILENAME}/${FILENAME}.results"
+			
+			${scripts_dir}/fubar_process_results.sh ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results
+		</foreach>
+
+		<foreach id="check-codeml-limit" after="gather-fubar-codeml-run-lists" of="command" in="cat ${working_dir}/run_lists/codeml" as="line">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
+            
+            mkdir -p ${FILE_PATH}/fasta_checked
+            rm -f ${FILE_PATH}/fasta_checked/${FILENAME}
+            ${scripts_dir}/codeml_check_limit.sh ${FILENAME} ${FILE_PATH}/fasta ${FILE_PATH}/fasta_checked/${FILENAME}
+		</foreach>
+
+		<foreach id="run-codeml" after="*check-codeml-limit" of="command" in="cat ${working_dir}/run_lists/codeml" as="line" params="codeml_models">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
+
+			MR_BAYES_PATH_DOCKER=$(echo ${FILE_PATH_DOCKER} | sed 's/original_alignment/gapped_alignment/g')
+			
+			rm -rf ${FILE_PATH}/results/${FILENAME}
+			mkdir -p ${FILE_PATH}/results/${FILENAME}
+
+			${scripts_dir}/codeml_prepare_ctl_file.sh ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.ctl "${codeml_models}" "/data/fasta_checked/${FILENAME}" "/tree/mrbayes/${FILENAME}/mrbayes_tree_without_branch_lengths.tre" "/data/results/${FILENAME}/${FILENAME}.codeml.out"
+			
+			# Mount larger file paths to avoid codeML failing due to long file paths
+			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/:/data -v ${host_working_dir}/${MR_BAYES_PATH_DOCKER}:/tree pegi3s/paml:${version_paml} /data/results/${FILENAME}/${FILENAME}.codeml.ctl
+            
+            ${scripts_dir}/codeml_process_results.sh ${FILE_PATH}/fasta_checked/${FILENAME} ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.out ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results_PSS.list
+		</foreach>
+
+		<task id="gather-phipack-run-lists" after="gather-fubar-codeml-run-lists,gather-omegamap-run-lists">
+			cat ${working_dir}/run_lists/codeml ${working_dir}/run_lists/omegamap ${working_dir}/run_lists/fubar > ${working_dir}/run_lists/phipack
+		</task>
+		
+		<foreach id="run-phipack" after="gather-phipack-run-lists" of="command" in="cat ${working_dir}/run_lists/phipack" as="line">
+			FILE_PATH=$(echo $line | cut -d',' -f1)
+			FILENAME=$(echo $line | cut -d',' -f2)
+			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
+			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
+
+			rm -rf ${FILE_PATH}/phipack/${FILENAME}
+			mkdir -p ${FILE_PATH}/phipack/${FILENAME}
+
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/phipack:${version_phipack} bash -c "Phi -f /data/${FILE_PATH_DOCKER}/fasta/${FILENAME} -p 1000 -w 80 -o > /data/${FILE_PATH_DOCKER}/phipack/${FILENAME}/phipack.log"
+
+			if [ $? -eq 0 ]; then
+				${scripts_dir}/phipack_check_evidence.sh ${FILE_PATH}/phipack/${FILENAME} phipack.log
+			fi
+		</foreach>
+        
+		<foreach id="tabulate-results" after="run-omegamap, run-codeml, run-fubar" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+			FILENAME=$(basename -- "${file}")
+
+			rm -f ${working_dir}/pss_subsets/results/${FILENAME}
+
+			${scripts_dir}/tabulate_results.sh ${working_dir}/pss_subsets ${FILENAME} ${working_dir}/results/tabulated/${FILENAME}
+		</foreach>
+	</tasks>
+	<!--
+		The metadata section is optional and allows to define additional information about
+		the pipeline tasks.
+	<metadata>
+		<task-description id="task-1">Task 1 description.</task-description>
+		<task-description id="task-2">Task 2 description.</task-description>
+	</metadata>
+	-->
+</pipeline>
+
