@@ -29,7 +29,8 @@ rm -f tmpfile
 declare -a seq_names
 for (( i = 1; i < $(echo $numseq "+1" | bc -l); i++ )); do
 	seq_names[$i]=$(cat tmpfile2 | head -$i | tail -1)
-	sed -i "s/$i:/${seq_names[$i]}#/" mrbayes_tree_with_branch_lengths.tre
+	sed -i "s/($i:/(${seq_names[$i]}#/" mrbayes_tree_with_branch_lengths.tre
+	sed -i "s/,$i:/,${seq_names[$i]}#/" mrbayes_tree_with_branch_lengths.tre
 done
 
 sed -i "s/#/:/g" mrbayes_tree_with_branch_lengths.tre
