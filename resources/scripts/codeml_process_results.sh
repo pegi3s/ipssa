@@ -81,7 +81,7 @@ then
     do
     while read gap_value
     do
-        if [ "$codeml_value" -gt "$gap_value" ]
+        if [ "$codeml_value" -ge "$gap_value" ]
         then
         codeml_value=$(($codeml_value + 1))
         fi
