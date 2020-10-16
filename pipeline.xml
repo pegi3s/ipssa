@@ -62,7 +62,7 @@
 
 			mkdir -p ${working_dir}/input/1_original ${working_dir}/input/2_modified ${working_dir}/input/3_renamed_headers ${working_dir}/input/4_subsets ${working_dir}/input/5_translated ${working_dir}/input/6_aligned ${working_dir}/input/7_backtranslated ${working_dir}/input/8_master_alignment ${working_dir}/input/9_master_alignment_renamed
 
-			mkdir -p ${working_dir}/input/10_gapped_alignment/1_alignment ${working_dir}/input/10_gapped_alignment/2_gapped_alignment ${working_dir}/input/10_gapped_alignment/3_backtranslated ${working_dir}/input/10_gapped_alignment/4_fasta
+			mkdir -p ${working_dir}/input/10_gapped_alignment/1_alignment ${working_dir}/input/10_gapped_alignment/2_gapped_alignment ${working_dir}/input/10_gapped_alignment/3_dna_filtered_fasta
 
 			cp ${input_dir}/* ${working_dir}/input/1_original
 			cp ${input_dir}/* ${working_dir}/input/2_modified
@@ -255,25 +255,20 @@
 			mv ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.tcs_column_filter${tcoffee_min_score} ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln
 		</foreach>
 
-		<foreach id="mrbayes-back-translation" after="*mrbayes-filter-alignment" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+		<foreach id="mrbayes-reconstruct-dna-files" after="*mrbayes-filter-alignment" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
 			FILENAME=$(basename -- "${file}")
 			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
 
-			docker run --rm -v ${host_working_dir}:/data pegi3s/alter:${version_alter} -i /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln -o /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln.converted -ia -of ALN -oo Linux -op TCoffee
+			rm -f ${working_dir}/10_gapped_alignment/3_dna_filtered_fasta/${FILENAME_WITHOUT_EXT}.fasta
 
-			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee -other_pg seq_reformat -in /data/input/4_subsets/${FILENAME} -in2 /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln.converted -action +thread_dna_on_prot_aln -output clustalw > ${working_dir}/input/10_gapped_alignment/3_backtranslated/${FILENAME_WITHOUT_EXT}.aln
-		</foreach>
-		
-		<foreach id="mrbayes-clustal-to-fasta" after="*mrbayes-back-translation" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
-			FILENAME=$(basename -- "${file}")
-			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+			export VERSION_ALTER=${version_alter}
+			export VERSION_SEQKIT=${version_seqkit}
+			export VERSION_PEGI3S_UTILITIES=${version_utilities}
 
-			docker run --rm -v ${host_working_dir}:/data pegi3s/alter:${version_alter} -i /data/input/10_gapped_alignment/3_backtranslated/${FILENAME_WITHOUT_EXT}.aln -o /data/input/10_gapped_alignment/4_fasta/${FILENAME_WITHOUT_EXT}.fasta -ia -of FASTA -oo Linux -op GENERAL
-
-			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} fasta_remove_line_breaks /data/input/10_gapped_alignment/4_fasta/${FILENAME_WITHOUT_EXT}.fasta
+			${scripts_dir}/create_mrbayes_gapped_dna_alignment.sh ${working_dir}/input/6_aligned/${FILENAME_WITHOUT_EXT}.aln  ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln ${working_dir}/input/4_subsets/${FILENAME} ${working_dir}/input/10_gapped_alignment/3_dna_filtered_fasta/${FILENAME_WITHOUT_EXT}.fasta
 		</foreach>
 
-		<foreach id="mrbayes-create-pss-subsets" after="*create-pss-subsets,*mrbayes-clustal-to-fasta" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+		<foreach id="mrbayes-create-pss-subsets" after="*create-pss-subsets,*mrbayes-reconstruct-dna-files" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
 			FILENAME=$(basename -- "${file}")
 			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
 
@@ -290,7 +285,7 @@
 				for SUBSET in $(ls ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta); do
 					cat ${working_dir}/pss_subsets/${FILENAME}/original_alignment/${METHOD}/fasta/${SUBSET}| grep '>' | sed -e 's/>//g' > ${working_dir}/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_${SUBSET}
 					
-					docker run --rm -v ${host_working_dir}/:/data pegi3s/seqkit:${version_seqkit} grep -f /data/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_${SUBSET} /data/input/10_gapped_alignment/4_fasta/${FILENAME_WITHOUT_EXT}.fasta -o /data/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/${SUBSET}
+					docker run --rm -v ${host_working_dir}/:/data pegi3s/seqkit:${version_seqkit} grep -f /data/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_${SUBSET} /data/input/10_gapped_alignment/3_dna_filtered_fasta/${FILENAME_WITHOUT_EXT}.fasta -o /data/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/${SUBSET}
 					
 					rm ${working_dir}/pss_subsets/${FILENAME}/gapped_alignment/${METHOD}/fasta/ids_*
 					
