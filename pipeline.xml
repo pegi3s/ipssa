@@ -213,7 +213,7 @@
 			cat ${working_dir}/pss_subsets/*/run_lists/omegamap > ${working_dir}/run_lists/omegamap
 		</task>
 
-		<foreach id="run-omegamap" after="gather-omegamap-run-lists" of="command" in="cat ${working_dir}/run_lists/omegamap" as="line" params="omegamap_iterations">
+		<foreach id="run-omegamap" after="gather-omegamap-run-lists" of="command" in="if [ -s ${working_dir}/run_lists/omegamap ]; then cat ${working_dir}/run_lists/omegamap; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/omegamap ]" params="omegamap_iterations">
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
@@ -299,7 +299,7 @@
 			cat ${working_dir}/pss_subsets/*/run_lists/mrbayes > ${working_dir}/run_lists/mrbayes
 		</task>
 
-		<foreach id="prepare-mrbayes-files" after="gather-mrbayes-run-lists" of="command" in="cat ${working_dir}/run_lists/mrbayes" as="line" params="mrbayes_generations mrbayes_burnin mrbayes_model mrbayes_rates">
+		<foreach id="prepare-mrbayes-files" after="gather-mrbayes-run-lists" of="command" in="if [ -s ${working_dir}/run_lists/mrbayes ]; then cat ${working_dir}/run_lists/mrbayes; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/mrbayes ]" params="mrbayes_generations mrbayes_burnin mrbayes_model mrbayes_rates">
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
@@ -313,7 +313,7 @@
 			${scripts_dir}/mrbayes_append_nexus_file.sh ${FILE_PATH}/mrbayes/${FILENAME}/${FILENAME}.nex ${mrbayes_generations} ${mrbayes_burnin} ${mrbayes_model} ${mrbayes_rates}
 		</foreach>
 		
-		<foreach id="run-mrbayes" after="*prepare-mrbayes-files" of="command" in="cat ${working_dir}/run_lists/mrbayes" as="line">
+		<foreach id="run-mrbayes" after="*prepare-mrbayes-files" of="command" in="if [ -s ${working_dir}/run_lists/mrbayes ]; then cat ${working_dir}/run_lists/mrbayes; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/mrbayes ]">
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
@@ -347,7 +347,7 @@
 			cat ${working_dir}/pss_subsets/*/run_lists/codeml > ${working_dir}/run_lists/codeml
 		</task>
 
-		<foreach id="run-fubar" after="gather-fubar-codeml-run-lists" of="command" in="cat ${working_dir}/run_lists/fubar" as="line">
+		<foreach id="run-fubar" after="gather-fubar-codeml-run-lists" of="command" in="if [ -s ${working_dir}/run_lists/fubar ]; then cat ${working_dir}/run_lists/fubar; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/fubar ]">
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
@@ -367,7 +367,7 @@
 			${scripts_dir}/fubar_process_results.sh ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results
 		</foreach>
 
-		<foreach id="check-codeml-limit" after="gather-fubar-codeml-run-lists" of="command" in="cat ${working_dir}/run_lists/codeml" as="line">
+		<foreach id="check-codeml-limit" after="gather-fubar-codeml-run-lists" of="command" in="if [ -s ${working_dir}/run_lists/codeml ]; then cat ${working_dir}/run_lists/codeml; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/codeml ]">
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
@@ -378,7 +378,7 @@
             ${scripts_dir}/codeml_check_limit.sh ${FILENAME} ${FILE_PATH}/fasta ${FILE_PATH}/fasta_checked/${FILENAME}
 		</foreach>
 
-		<foreach id="run-codeml" after="*check-codeml-limit" of="command" in="cat ${working_dir}/run_lists/codeml" as="line" params="codeml_models">
+		<foreach id="run-codeml" after="*check-codeml-limit" of="command" in="if [ -s ${working_dir}/run_lists/codeml ]; then cat ${working_dir}/run_lists/codeml; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/codeml ]" params="codeml_models">
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
@@ -401,7 +401,7 @@
 			cat ${working_dir}/run_lists/codeml ${working_dir}/run_lists/omegamap ${working_dir}/run_lists/fubar > ${working_dir}/run_lists/phipack
 		</task>
 		
-		<foreach id="run-phipack" after="gather-phipack-run-lists" of="command" in="cat ${working_dir}/run_lists/phipack" as="line">
+		<foreach id="run-phipack" after="gather-phipack-run-lists" of="command" in="if [ -s ${working_dir}/run_lists/phipack ]; then cat ${working_dir}/run_lists/phipack; else echo NULL; fi" as="line" if="[ -s ${working_dir}/run_lists/phipack ]" >
 			FILE_PATH=$(echo $line | cut -d',' -f1)
 			FILENAME=$(echo $line | cut -d',' -f2)
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
