@@ -16,10 +16,10 @@ cp $1 ${TMP_DIR}/${INPUT_FASTA_FILENAME}
 #Extract and compare log likelihood values
 
 #codeML will execute models by the order indicated in the config file. Moreover the loglikelihood value is not always in the same position relative to the header
-M1=$(grep -A10 'Model 1' ${CODEML_OUT_FILE} | grep 'lnL' | grep -oP '( )\K -[0123456789.]*' | sed 's/ //g')
-M2=$(grep -A10 'Model 2' ${CODEML_OUT_FILE} | grep 'lnL' | grep -oP '( )\K -[0123456789.]*' | sed 's/ //g')
-M7=$(grep -A10 'Model 7' ${CODEML_OUT_FILE} | grep 'lnL' | grep -oP '( )\K -[0123456789.]*' | sed 's/ //g')
-M8=$(grep -A10 'Model 8' ${CODEML_OUT_FILE} | grep 'lnL' | grep -oP '( )\K -[0123456789.]*' | sed 's/ //g')
+M1=$(grep -A10 'Model 1' ${CODEML_OUT_FILE} | grep 'lnL' | grep -o -e ' \-[0123456789.]* ' | sed 's/ //g')
+M2=$(grep -A10 'Model 2' ${CODEML_OUT_FILE} | grep 'lnL' | grep -o -e ' \-[0123456789.]* ' | sed 's/ //g')
+M7=$(grep -A10 'Model 7' ${CODEML_OUT_FILE} | grep 'lnL' | grep -o -e ' \-[0123456789.]* ' | sed 's/ //g')
+M8=$(grep -A10 'Model 8' ${CODEML_OUT_FILE} | grep 'lnL' | grep -o -e ' \-[0123456789.]* ' | sed 's/ //g')
 
 echo "The loglikelihoods for models M1, M2, M7 and M8 are" $M1 $M2 $M7 $M8 "respectively"
 
