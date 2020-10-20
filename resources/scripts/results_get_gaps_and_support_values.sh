@@ -31,7 +31,7 @@ do
 	echo $corrvalue >> ${TMP_DIR}/${FILENAME}.fasta.tmp3
 done < ${TMP_DIR}/${FILENAME}.fasta.tmp2
 
-sort -u ${TMP_DIR}/${FILENAME}.fasta.tmp3 > ${TMP_DIR}/${FILENAME}.fasta.tmp4
+sort -nu ${TMP_DIR}/${FILENAME}.fasta.tmp3 > ${TMP_DIR}/${FILENAME}.fasta.tmp4
 
 echo "Gapped sites in protein alignment" >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
 echo $(cat ${TMP_DIR}/${FILENAME}.fasta.tmp4) >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
@@ -69,7 +69,7 @@ do
 	fi
 done < ${TMP_DIR}/${FILENAME}.fasta.tmp3.support
 
-sort -u ${TMP_DIR}/${FILENAME}.fasta.tmp4.support > ${TMP_DIR}/${FILENAME}.fasta.tmp5.support
+sort -nu ${TMP_DIR}/${FILENAME}.fasta.tmp4.support > ${TMP_DIR}/${FILENAME}.fasta.tmp5.support
 
 echo "Low support positions in the alignment" >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
 echo $(cat ${TMP_DIR}/${FILENAME}.fasta.tmp5.support) >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
