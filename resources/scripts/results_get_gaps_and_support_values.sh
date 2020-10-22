@@ -9,11 +9,14 @@ FILENAME=${FILENAME_WITHOUT_EXT}
 
 TMP_DIR=$(mktemp -d /tmp/support-values-${FILENAME}.XXXX)
 
+VERSION_ALTER=${VERSION_ALTER:-latest}
+VERSION_PEGI3S_UTILITIES=${VERSION_PEGI3S_UTILITIES:-latest}
+
 #Get alignment gaps
 
-docker run --rm -v ${HOST_WORKING_DIR}/:/data -v /tmp:/tmp pegi3s/alter -i /data/input/6_aligned/${FILENAME}.aln -o ${TMP_DIR}/${FILENAME}.fasta -ia -of FASTA -oo Linux -op GENERAL
+docker run --rm -v ${HOST_WORKING_DIR}/:/data -v /tmp:/tmp pegi3s/alter:${VERSION_ALTER} -i /data/input/6_aligned/${FILENAME}.aln -o ${TMP_DIR}/${FILENAME}.fasta -ia -of FASTA -oo Linux -op GENERAL
 
-docker run --rm -v /tmp:/tmp pegi3s/utilities fasta_remove_line_breaks ${TMP_DIR}/${FILENAME}.fasta
+docker run --rm -v /tmp:/tmp pegi3s/utilities:${VERSION_PEGI3S_UTILITIES} fasta_remove_line_breaks ${TMP_DIR}/${FILENAME}.fasta
 
 grep -v '>' ${TMP_DIR}/${FILENAME}.fasta > ${TMP_DIR}/${FILENAME}.fasta.tmp1
 
@@ -38,9 +41,9 @@ echo $(cat ${TMP_DIR}/${FILENAME}.fasta.tmp4) >> ${WORKING_DIR}/results/tabulate
 
 #Get low support values
 
-docker run --rm -v ${HOST_WORKING_DIR}/:/data -v /tmp:/tmp pegi3s/alter -i /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME}.aln -o ${TMP_DIR}/${FILENAME}.fasta.support -ia -of FASTA -oo Linux -op GENERAL
+docker run --rm -v ${HOST_WORKING_DIR}/:/data -v /tmp:/tmp pegi3s/alter:${VERSION_ALTER} -i /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME}.aln -o ${TMP_DIR}/${FILENAME}.fasta.support -ia -of FASTA -oo Linux -op GENERAL
 
-docker run --rm -v /tmp:/tmp pegi3s/utilities fasta_remove_line_breaks ${TMP_DIR}/${FILENAME}.fasta.support
+docker run --rm -v /tmp:/tmp pegi3s/utilities:${VERSION_PEGI3S_UTILITIES} fasta_remove_line_breaks ${TMP_DIR}/${FILENAME}.fasta.support
 
 grep -v '>' ${TMP_DIR}/${FILENAME}.fasta.support > ${TMP_DIR}/${FILENAME}.fasta.tmp1.support
 

@@ -423,6 +423,9 @@
 			rm -f ${working_dir}/pss_subsets/results/${FILENAME}
 
 			${scripts_dir}/tabulate_results.sh ${working_dir}/pss_subsets ${FILENAME} ${working_dir}/results/tabulated/${FILENAME}
+
+			export VERSION_ALTER=${version_alter}
+			export VERSION_PEGI3S_UTILITIES=${version_utilities}
 			${scripts_dir}/results_get_gaps_and_support_values.sh ${FILENAME} ${working_dir} ${host_working_dir}
 		</foreach>
 	</tasks>
