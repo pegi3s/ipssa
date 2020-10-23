@@ -246,12 +246,13 @@
 		<foreach id="mrbayes-filter-alignment" after="*align-protein-sequences" of="command" in="ls ${working_dir}/input/2_modified/*" as="file" params="tcoffee_min_score">
 			FILENAME=$(basename -- "${file}")
 			FILENAME_WITHOUT_EXT="${FILENAME%.*}"
-			
+			FILENAME_WITHOUT_ALL_EXT=$(echo ${FILENAME} | cut -d'.' -f1)
+
 			cp ${working_dir}/input/6_aligned/${FILENAME_WITHOUT_EXT}.aln ${working_dir}/input/10_gapped_alignment/1_alignment/${FILENAME_WITHOUT_EXT}.aln
 
 			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee -infile /data/input/10_gapped_alignment/1_alignment/${FILENAME_WITHOUT_EXT}.aln -evaluate -output tcs_column_filter${tcoffee_min_score} -run_name /data/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}
 
-			mv ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.tcs_column_filter${tcoffee_min_score} ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln
+			mv ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_ALL_EXT}.tcs_column_filter${tcoffee_min_score} ${working_dir}/input/10_gapped_alignment/2_gapped_alignment/${FILENAME_WITHOUT_EXT}.aln
 		</foreach>
 
 		<foreach id="mrbayes-reconstruct-dna-files" after="*mrbayes-filter-alignment" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
