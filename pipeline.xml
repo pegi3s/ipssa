@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- This is an example file of a compi pipeline -->
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<version>1.0.0</version>
@@ -389,10 +388,10 @@
 			rm -rf ${FILE_PATH}/results/${FILENAME}
 			mkdir -p ${FILE_PATH}/results/${FILENAME}
 
-			${scripts_dir}/codeml_prepare_ctl_file.sh ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.ctl "${codeml_models}" "/data/fasta_checked/${FILENAME}" "/tree/mrbayes/${FILENAME}/mrbayes_tree_without_branch_lengths.tre" "/data/results/${FILENAME}/${FILENAME}.codeml.out"
+			${scripts_dir}/codeml_prepare_ctl_file.sh ${FILE_PATH}/results/${FILENAME}/codeml.ctl "${codeml_models}" "/data/fasta_checked/${FILENAME}" "/tree/mrbayes/${FILENAME}/mrbayes_tree_without_branch_lengths.tre" "/data/results/${FILENAME}/${FILENAME}.codeml.out"
 			
-			# Mount larger file paths to avoid codeML failing due to long file paths
-			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/:/data -v ${host_working_dir}/${MR_BAYES_PATH_DOCKER}:/tree pegi3s/paml:${version_paml} /data/results/${FILENAME}/${FILENAME}.codeml.ctl
+			# Mount shorter file paths to avoid codeML failing due to long file paths
+			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/:/data -v ${host_working_dir}/${MR_BAYES_PATH_DOCKER}:/tree pegi3s/paml:${version_paml} /data/results/${FILENAME}/codeml.ctl
             
             ${scripts_dir}/codeml_process_results.sh ${FILE_PATH}/fasta_checked/${FILENAME} ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.out ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results_PSS.list
 		</foreach>
@@ -429,13 +428,39 @@
 			${scripts_dir}/results_get_gaps_and_support_values.sh ${FILENAME} ${working_dir} ${host_working_dir}
 		</foreach>
 	</tasks>
-	<!--
-		The metadata section is optional and allows to define additional information about
-		the pipeline tasks.
+
 	<metadata>
-		<task-description id="task-1">Task 1 description.</task-description>
-		<task-description id="task-2">Task 2 description.</task-description>
+		<task-description id="pull-docker-images">Pulls the necessary Docker images from the pegi3s/dockerfiles project..</task-description>
+		<task-description id="initialization">Initialices the working directory.</task-description>
+		<task-description id="prepare-input-files">Removes stop codons and line breaks from all input files.</task-description>
+		<task-description id="gather-omegamap-run-lists">Joins all OmegaMap run lists into a single run list.</task-description>
+		<task-description id="gather-mrbayes-run-lists">Joins all Mr. Bayes run lists into a single run list.</task-description>
+		<task-description id="gather-fubar-codeml-run-lists">Joins all FUBAR and codeML run lists into a single run list.</task-description>
+		<task-description id="gather-phipack-run-lists">Joins all phipack run lists into a single run list.</task-description>
+		<task-description id="check-input-files">Verifies if any of the input files contains ambiguous nucleotide positions or non-multiple of 3 sequences. If so, the pipeline execution is stopped and the problematic files must be manually fixed before continuing.</task-description>
+		<task-description id="rename-headers">.</task-description>
+		<task-description id="create-subset">.</task-description>
+		<task-description id="translate-dna-to-protein">.</task-description>
+		<task-description id="align-protein-sequences">.</task-description>
+		<task-description id="back-translation">.</task-description>
+		<task-description id="clustal-to-fasta">.</task-description>
+		<task-description id="rename-headers-back">.</task-description>
+		<task-description id="phipack-master-alignment">.</task-description>
+		<task-description id="check-master-alignment-recombination">.</task-description>
+		<task-description id="rename-headers-pss-subsets">.</task-description>
+		<task-description id="run-omegamap">.</task-description>
+		<task-description id="create-pss-subsets">.</task-description>
+		<task-description id="mrbayes-filter-alignment">.</task-description>
+		<task-description id="mrbayes-reconstruct-dna-files">.</task-description>
+		<task-description id="mrbayes-create-pss-subsets">.</task-description>
+		<task-description id="prepare-mrbayes-files">.</task-description>
+		<task-description id="run-mrbayes">.</task-description>
+		<task-description id="create-fubar-codeml-run-lists">.</task-description>
+		<task-description id="run-fubar">.</task-description>
+		<task-description id="check-codeml-limit">.</task-description>
+		<task-description id="run-codeml">.</task-description>
+		<task-description id="run-phipack">.</task-description>
+		<task-description id="tabulate-results">.</task-description>
 	</metadata>
-	-->
 </pipeline>
 
