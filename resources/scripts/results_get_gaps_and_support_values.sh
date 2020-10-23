@@ -34,6 +34,8 @@ do
 	echo $corrvalue >> ${TMP_DIR}/${FILENAME}.fasta.tmp3
 done < ${TMP_DIR}/${FILENAME}.fasta.tmp2
 
+touch ${TMP_DIR}/${FILENAME}.fasta.tmp3
+
 sort -nu ${TMP_DIR}/${FILENAME}.fasta.tmp3 > ${TMP_DIR}/${FILENAME}.fasta.tmp4
 
 echo "Gapped sites in protein alignment" >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
@@ -77,6 +79,10 @@ sort -nu ${TMP_DIR}/${FILENAME}.fasta.tmp4.support > ${TMP_DIR}/${FILENAME}.fast
 echo "Low support positions in the alignment" >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
 echo $(cat ${TMP_DIR}/${FILENAME}.fasta.tmp5.support) >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
 
-recomb=$(cat ${WORKING_DIR}/input/results/master_alignment/phipack/${ORIGINAL_FILENAME}/phipack.log.summary)
 echo "Evidence for recombination in the master alignment" >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
-echo $recomb >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
+if [ -f ${WORKING_DIR}/input/results/master_alignment/phipack/${ORIGINAL_FILENAME}/phipack.log.summary ]; then
+	recomb=$(cat ${WORKING_DIR}/input/results/master_alignment/phipack/${ORIGINAL_FILENAME}/phipack.log.summary)
+	echo $recomb >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
+else
+	echo "Not available" >> ${WORKING_DIR}/results/tabulated/${ORIGINAL_FILENAME}
+fi
