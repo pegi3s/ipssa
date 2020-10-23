@@ -110,7 +110,7 @@ for file in `ls ${TMP_DIR}/split_protein_alignment`; do
 
   while read line
   do
-    line_corr=$(($line * 3))
+    line_corr=$((($line+1) * 3))
     sed -i "s/./&---/$line_corr" tmp7
   done < tmp9
 
