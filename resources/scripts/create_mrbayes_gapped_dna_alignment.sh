@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # This script receives three files as input:
@@ -110,8 +110,9 @@ for file in `ls ${TMP_DIR}/split_protein_alignment`; do
 
   while read line
   do
-    line_corr=$((($line+1) * 3))
-    sed -i "s/./&---/$line_corr" tmp7
+    line_corr=$((($line) * 3))
+    TEXT=$(cat tmp7)
+    echo ${TEXT:0:line_corr}---${TEXT:line_corr} > tmp7
   done < tmp9
 
   cat tmp7 >> result.fasta
