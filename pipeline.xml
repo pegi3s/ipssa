@@ -362,8 +362,8 @@
 
 			${scripts_dir}/fubar_create_hyphy_setttings_file.sh ${FILE_PATH}/results/${FILENAME}/HYPHY_settings "/data/${FILE_PATH_DOCKER}/results/${FILENAME}/${FILENAME}.fna"
 
-			docker run --rm -v ${host_working_dir}/:/data pegi3s/hyphy:${version_hyphy} bash -c "cat /data/${FILE_PATH_DOCKER}/results/${FILENAME}/HYPHY_settings | HYPHYMP > /data/${FILE_PATH_DOCKER}/results/${FILENAME}/${FILENAME}.results"
-			
+			docker run --rm -v ${host_working_dir}/:/data pegi3s/hyphy:${version_hyphy} bash -c "cd /data/${FILE_PATH_DOCKER}/results/${FILENAME}/; cat HYPHY_settings | HYPHYMP > ${FILENAME}.results"
+
 			${scripts_dir}/fubar_process_results.sh ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results
 		</foreach>
 
