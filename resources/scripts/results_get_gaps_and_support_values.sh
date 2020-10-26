@@ -28,13 +28,13 @@ done < ${TMP_DIR}/${FILENAME}.fasta.tmp1
 sed -i 's/\://g' ${TMP_DIR}/${FILENAME}.fasta.tmp2
 sed -i 's/\-//g' ${TMP_DIR}/${FILENAME}.fasta.tmp2
 
+touch ${TMP_DIR}/${FILENAME}.fasta.tmp3
+
 while read line
 do
 	corrvalue=$(($line + 1))
 	echo $corrvalue >> ${TMP_DIR}/${FILENAME}.fasta.tmp3
 done < ${TMP_DIR}/${FILENAME}.fasta.tmp2
-
-touch ${TMP_DIR}/${FILENAME}.fasta.tmp3
 
 sort -nu ${TMP_DIR}/${FILENAME}.fasta.tmp3 > ${TMP_DIR}/${FILENAME}.fasta.tmp4
 
@@ -56,6 +56,8 @@ done < ${TMP_DIR}/${FILENAME}.fasta.tmp1.support
 
 sed -i 's/\://g' ${TMP_DIR}/${FILENAME}.fasta.tmp2.support
 sed -i 's/\-//g' ${TMP_DIR}/${FILENAME}.fasta.tmp2.support
+
+touch ${TMP_DIR}/${FILENAME}.fasta.tmp3.support
 
 while read line
 do
