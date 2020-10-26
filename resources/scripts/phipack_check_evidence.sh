@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Look for evidence for recombination judging from Phi permutation test
 # [parameters] [1] directory [2] phipack.log file

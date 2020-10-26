@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # [1] ctl file path
 #[1] file [2] file dir [3] tree file [4] tree file dir [5] codeMLmodels

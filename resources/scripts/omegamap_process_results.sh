@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # [parameters] [1] directory containing the omegamap results [2] base file name
 

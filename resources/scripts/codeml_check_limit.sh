@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # check for codeML 270000 limit
 

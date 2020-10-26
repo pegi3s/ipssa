@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Extracts uncorrected and corrected codeML PSS
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #[parameters] [1] hyphy configuration file [2] fna input file path
 

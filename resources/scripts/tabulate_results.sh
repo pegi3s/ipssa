@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Tabulates PSS results
 #Runs only when all other tasks for a given gene are finished, i.e, all replicas using all methods.

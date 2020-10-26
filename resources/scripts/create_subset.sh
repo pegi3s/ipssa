@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #[1] file [2] dir [3] new dir [4] sub size [5] iteraction [6] random seed string
 

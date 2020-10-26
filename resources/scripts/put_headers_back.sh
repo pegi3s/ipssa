@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function printHelp {
-  echo "Usage: `basename $0` </path/to/input_fasta> </path/to/headers_map_file </path/to/outut/fasta>"
+  echo "Usage: `basename $0` </path/to/input_fasta> </path/to/headers_map_file> </path/to/outut/fasta>"
 }
 
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
