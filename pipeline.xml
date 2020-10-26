@@ -174,9 +174,11 @@
 			FILENAME=$(basename -- "${file}")
 			
 			if [ ! -z ${omegamap_recomb} ]; then
-				count=$(cat ${working_dir}/input/results/master_alignment/phipack/${FILENAME}/phipack.log.summary | grep "^No evidence" | wc -l)
-				if [ $count -eq 1 ]; then
-					rm -rf ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta
+				if [ -f ${working_dir}/input/results/master_alignment/phipack/${FILENAME}/phipack.log.summary ]; then
+					count=$(cat ${working_dir}/input/results/master_alignment/phipack/${FILENAME}/phipack.log.summary | grep "^No evidence" | wc -l)
+					if [ $count -eq 1 ]; then
+						rm -rf ${working_dir}/pss_subsets/${FILENAME}/original_alignment/omegamap/fasta
+					fi
 				fi
 			fi
 
