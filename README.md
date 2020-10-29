@@ -80,6 +80,17 @@ host_working_dir=/path/to/ipssa_project/pipeline_working_dir
 ```
 
 ## Extra
+
+### Find out tasks with errors
+
+Some tasks may produce errors that do not cause the pipeline to fail, but they can be important. Such errors are reported in the log files produced in the `logs` directory of the pipeline working directory. The `find-error-tasks.sh` script of the `pegi3s/ipssa` Docker image displays the errored tasks (i.e. those containing the word error in their log files) along with the names of the corresponding input files. Run the following command to find them (assuming the environment variables with the project and working directory paths have been declared):
+
+```bash
+docker run --entrypoint /opt/scripts/find-error-tasks.sh -v ${PIPELINE_WORKING_DIR}:/working_dir -v ${INPUT_DIR}:/input --rm pegi3s/ipssa /working_dir/logs /input
+```
+
+### Re-running the pipeline
+
 To re-run the pipeline in the same project directory, run the following command first in order to clean the pipeline working directory:
 
 ```bash
