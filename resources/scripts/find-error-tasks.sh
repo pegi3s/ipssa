@@ -7,39 +7,36 @@ RUN_LISTS_DIR=$3
 INDEX=0
 
 for file in $(ls -A ${FILES_DIR}); do
-	ERRORS=$(cat ${LOGS_DIR}/*_${INDEX}*log | grep -i 'error' | wc -l)
+	ERROR_LOGS=$(mktemp /tmp/logs_${INDEX}.XXXXXXX)
+	touch ${ERROR_LOGS}
 
-	if [ ! ${ERRORS} -eq 0 ]; then
-		for log in $(ls -1A ${LOGS_DIR}/*_${INDEX}*log | grep -v 'run-omegamap\|prepare-mrbayes-files\|run-mrbayes\|run-fubar\|check-codeml-limit\|run-codeml\|run-phipack' | grep -e "_${INDEX}.err.log" -e "_${INDEX}.out.log" | sort); do
-			LOG_FILENAME=$(basename -- "${log}")
-			ERROR=$(cat ${log} | grep -i 'error' | wc -l);
-			if [ ! $ERROR -eq 0 ]; then
-				echo -e "${file}\t${LOG_FILENAME}"
-			fi
-		done
-	fi
+	ls ${LOGS_DIR}/*_${INDEX}*log | grep -v 'run-omegamap\|prepare-mrbayes-files\|run-mrbayes\|run-fubar\|check-codeml-limit\|run-codeml\|run-phipack' | grep -e "_${INDEX}.err.log" -e "_${INDEX}.out.log" | xargs grep -l -i 'error' > ${ERROR_LOGS}
+
+	while read LOG_FILE; do
+		LOG_FILENAME=$(basename -- "${LOG_FILE}")
+		echo -e "${file}\t${LOG_FILENAME}"
+	done < ${ERROR_LOGS}
+
+	rm -f  ${ERROR_LOGS}
 
 	INDEX=$((INDEX + 1))
 done
 
 function process_run_list_logs {
-	INDEX=0
 	TASK=$1
 	RUN_LIST=$2
 
-	while read file; do
-		file=$(echo ${file} | cut -d',' -f2)
+	TASK_LOG_FILES=$(grep -l -i 'error' ${LOGS_DIR}/${TASK}*log)
+	for LOG_FILE in ${TASK_LOG_FILES}; do
+		LOG_FILE_INDEX=$(echo ${LOG_FILE} | sed -r 's#.*_([0-9]*)\..*#\1#g' | awk '{print $1+1}');
+		ERROR_FILE_NAME=$(cat ${RUN_LIST} | sed -n "${LOG_FILE_INDEX}p" | cut -d',' -f2)
 
-		for log in $(ls -1A ${LOGS_DIR}/${TASK}*_${INDEX}*log | grep -e "_${INDEX}.err.log" -e "_${INDEX}.out.log" | sort); do
-			LOG_FILENAME=$(basename -- "${log}")
-			ERROR=$(cat ${log} | grep -i 'error' | wc -l);
-			if [ ! $ERROR -eq 0 ]; then
-				echo -e "${file}\t${LOG_FILENAME}"
-			fi
-		done
+		LOG_FILENAME=$(basename -- "${LOG_FILE}")
+		ERROR_FILE_NAME=$(basename -- "${ERROR_FILE_NAME}")
 
-		INDEX=$((INDEX + 1))
-	done < ${RUN_LIST}
+		echo -e "${ERROR_FILE_NAME}\t${LOG_FILENAME}"
+	done
+
 }
 
 process_run_list_logs run-omegamap ${RUN_LISTS_DIR}/omegamap
