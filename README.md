@@ -1,26 +1,26 @@
-# IPSSA [![license](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/pegi3s/ipssa) [![dockerhub](https://img.shields.io/badge/hub-docker-blue)](https://hub.docker.com/r/pegi3s/ipssa) [![compihub](https://img.shields.io/badge/hub-compi-blue)](https://www.sing-group.org/compihub/explore/5d5bb64f6d9e31002f3ce30a)
-> **IPSSA** (Integrated Positively Selected Sites Analyses) is a [compi](https://www.sing-group.org/compi/) pipeline to XXXYYYZZZ. A Docker image is available for this pipeline in [this Docker Hub repository](https://hub.docker.com/r/pegi3s/ipssa).
+# IPSSA [![license](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/pegi3s/ipssa) [![dockerhub](https://img.shields.io/badge/hub-docker-blue)](https://hub.docker.com/r/pegi3s/ipssa) [![compihub](https://img.shields.io/badge/hub-compi-blue)](https://www.sing-group.org/compihub/explore/5fa91806407682001ad3a1e9)
+> **IPSSA** (Integrated Positively Selected Sites Analyses) is a [Compi](https://www.sing-group.org/compi/) pipeline to automatically identify positively selected amino acid sites using three different methods, namely CodeML, omegaMap, and FUBAR. Moreover, it looks for evidence of recombination in the data. A Docker image is available for this pipeline in [this Docker Hub repository](https://hub.docker.com/r/pegi3s/ipssa).
 
 ## IPSSA repositories
 
 - [GitHub](https://github.com/pegi3s/ipssa)
 - [DockerHub](https://hub.docker.com/r/pegi3s/ipssa)
-- [CompiHub](https://www.sing-group.org/compihub/explore/5d5bb64f6d9e31002f3ce30a)
+- [CompiHub](https://www.sing-group.org/compihub/explore/5fa91806407682001ad3a1e9)
 
 # What does IPSSA do?
 
-**IPSSA** (Integrated Positively Selected Sites Analyses) is a [compi](https://www.sing-group.org/compi/) pipeline to XXXYYYZZZ.
+**IPSSA** (Integrated Positively Selected Sites Analyses) is a [Compi](https://www.sing-group.org/compi/) pipeline to automatically identify positively selected amino acid sites using three different methods, namely CodeML, omegaMap, and FUBAR. Moreover, it looks for evidence of recombination in the data.
  
 IPSSA applies the same steps to each input FASTA file separately. This process comprises:
-    1. Checking if the input FASTA file contains contains ambiguous nucleotide positions or non-multiple of three sequences. If so, the pipeline stops at this point and the files must be fixed.
-    2. Extract a random subset of sequences according to the sequence limit specified.
-    3. Translate to protein sequences and perform sequence alignment on the aligned sequences.
-    4. The aligned protein sequences are then backtranslated to produce a master DNA alignment, used to:
+    1. Checking if the input FASTA file contains ambiguous nucleotide positions or non-multiple of three sequences. If so, the pipeline stops at this point and the files must be fixed.
+    2. Extract a random subset of sequences according to the sequence limit specified to create the master set of sequences.
+    3. Translate and align the master set of sequences.
+    4. The master protein alignment is then backtranslated to produce a master DNA alignment, used to:
         4.1 Run phipack.
-        4.2 Create the PSS subsets for CodeML, omegaMap, and FUBAR, according to the number of replicas specified for each method.
-    5. The aligned protein sequences are also filtered to remove positions corresponding to aminoacids with low support. These filtered files are converted into DNA files, which are split into the same subsets than the master DNA alignment files. These are the Mr. Bayes PSS subsets, used to run Mr. Bayes on them.
+        4.2 Create the PSS subsets for CodeML, omegaMap, and FUBAR, according to the number of sequences and replicas specified for each method.
+    5. The master protein alignment is also filtered to remove low confidence positions, according to the value specified. These filtered files are then converted into DNA files, which are split into the same subsets used by CodeML, omegaMap, and FUBAR. These are the files used by MrBayes to produce a Bayesian phylogenetic tree that is used by FUBAR and CodeML.
     6. Run phipack for each one of the PSS subsets.
-    7. Run Mr. Bayes for each one of the PSS subsets (using the filtered DNA files produced in step 5).
+    7. Run MrBayes for each one of the PSS subsets (using the filtered DNA files produced in step 5).
     8. Run CodeML, omegaMap, and FUBAR, using their corresponding PSS subsets.
     9. Finally, gather the results of all PSS methods into a tabular format.
 
@@ -60,7 +60,11 @@ docker run -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v ${PIPELI
 
 ## Running IPSSA with a parameters file
 
-If you want to specify the pipeline parameters using a Compi parameters file, you should run and adapt the following commands to run the entire pipeline using the default parameters (i.e. without a Compi parameters file). Here, you only need to set `PROJECT_DIR` to the right path in your local file system and `COMPI_NUM_TASKS` to the maximum number of parallel tasks that can be run. 
+If you want to specify the pipeline parameters using a Compi parameters file, you should run and adapt the following commands. These are the same commands as above but with the addition of the `PARAMS_DIR` variable.
+
+An example of a Compi parameters file can be obtained running the following command: `docker run --rm --entrypoint cat pegi3s/ipssa /resources/ipssa-project.params`.
+
+This parameters file contains the default values recommended for running IPSSA. Please, note that you must update the value of the `host_working_dir` parameter in this file before using it.
 
 ```bash
 PROJECT_DIR=/path/to/ipssa_project
@@ -71,12 +75,6 @@ INPUT_DIR=${PROJECT_DIR}/input
 PARAMS_DIR=${PROJECT_DIR}
 
 docker run -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v ${PIPELINE_WORKING_DIR}:/working_dir -v ${INPUT_DIR}:/input -v ${PARAMS_DIR}:/params --rm pegi3s/ipssa -o --logs /working_dir/logs --num-tasks ${COMPI_NUM_TASKS} -pa /params/ipssa-project.params
-```
-
-As the `host_working_dir`, a minimal Compi parameters file must contain it:
-
-```
-host_working_dir=/path/to/ipssa_project/pipeline_working_dir
 ```
 
 ## Extra
@@ -101,24 +99,21 @@ sudo rm -rf ${PIPELINE_WORKING_DIR}
 
 These are the pipeline parameters:
 		
-- `sequence_limit`: The maximum number of sequences to use.
+- `sequence_limit`: The maximum number of sequences to use for the master file. The default value is `90`.
 - `random_seed`: The random seed.
-- `align_method`: The alignment method to use, one of: `clustalw`, `muscle`, `kalign`, `t_coffee`, or `amap`.
-- `tcoffee_min_score`: Minimum support value for columns.
-- `fubar_sequence_limit`: XXXYYYZZZ.
-- `omegamap_sequence_limit`: XXXYYYZZZ.
-- `codeml_sequence_limit`: XXXYYYZZZ.
-- `fubar_runs`: XXXYYYZZZ.
-- `omegamap_runs`: XXXYYYZZZ.
-- `codeml_runs`: XXXYYYZZZ.
-- `mrbayes_generations`: XXXYYYZZZ.
-- `mrbayes_burnin`: XXXYYYZZZ.
-- `mrbayes_model`: XXXYYYZZZ.
-- `mrbayes_rates`: XXXYYYZZZ.
-- `codeml_models`: XXXYYYZZZ.
-- `omegamap_recomb`: Runs OmegaMap only if recombination is detected in the master file.
-- `omegamap_iterations`: Number of OmegaMap iterations.
-
+- `align_method`: The alignment method to use, one of: `clustalw`, `muscle`, `kalign`, `t_coffee`, or `amap`. The default value is `muscle`.
+- `tcoffee_min_score`: The minimum support value for alignment positions. The default value is `3`.
+- `mrbayes_generations`: The number of iterations in MrBayes. The default value is `1000000`.
+- `mrbayes_burnin`: The MrBayes burnin. The default value is `2500`.
+- `fubar_sequence_limit`: The maximum number of sequences to be used by FUBAR. The default value is `90`.
+- `fubar_runs`: The number of independent replicas for FUBAR. The default value is `1`.
+- `codeml_sequence_limit`: The maximum number of sequences to be used by CodeML. The default value is `30`.
+- `codeml_runs`: The number of independent replicas for CodeML. The default value is `1`.
+- `codeml_models`: The CodeML models to be run, one or more of: '1', '2', '7', and/or '8'. To declare more than one model use a blank space between models. The default value is `1 2 7 8`.
+- `omegamap_sequence_limit`: The maximum number of sequences to be used by omegaMap. The default value is `90`.
+- `omegamap_iterations`: The number of omegaMap iterations. the default value is `1`.
+- `omegamap_runs`: The number of independent replicas for omegaMap. The default value is `2500`.
+- `omegamap_recomb`: A flag indicating if omegaMap must be executed only if recombination is detected in the master file. By default, the flag is not present and thus omegaMap is executed (if `omegamap_iterations` > 0).
 
 # For Developers
 

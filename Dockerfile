@@ -10,6 +10,8 @@ COPY resources/scripts/* /opt/scripts/
 
 RUN chmod u+x /opt/scripts/*
 
+COPY resources/ipssa-project.params /resources/ipssa-project.params
+
 ADD pipeline.xml /pipeline.xml
 
 ENTRYPOINT ["/compi", "run",  "-p", "/pipeline.xml"]

@@ -10,17 +10,17 @@
 		<param name="input_dir" shortName="id" global="true" defaultValue="/input">Path of the directory containing the input FASTA files.</param>
 		<param name="scripts_dir" shortName="sd" global="true" defaultValue="/opt/scripts/">Path of the directory containing the pipeline scripts.</param>
 		
-		<param name="sequence_limit" shortName="sl" defaultValue="20">The maximum number of sequences to use.</param>
-		<param name="random_seed" shortName="rs" defaultValue="100">The random seed.</param>
+		<param name="sequence_limit" shortName="sl" defaultValue="90">The maximum number of sequences to use.</param>
+		<param name="random_seed" shortName="rs" defaultValue="3976763">The random seed.</param>
 		<param name="align_method" shortName="am" defaultValue="muscle">The alignment method: clustalw, muscle, kalign, t_coffee, or amap.</param>
 		<param name="tcoffee_min_score" shortName="tms" defaultValue="3">Minimum support value for columns.</param>
 		
-		<param name="fubar_sequence_limit" shortName="fsl" defaultValue="8">The maximum number of sequences to use in FUBAR.</param>
-		<param name="omegamap_sequence_limit" shortName="osl" defaultValue="7">The maximum number of sequences to use in OmegaMap.</param>
-		<param name="codeml_sequence_limit" shortName="csl" defaultValue="6">The maximum number of sequences to use in codeML.</param>
-		<param name="fubar_runs" shortName="fr" defaultValue="2">The number of FUBAR runs.</param>
-		<param name="omegamap_runs" shortName="or" defaultValue="2">The number of OmegaMap runs.</param>
-		<param name="codeml_runs" shortName="cr" defaultValue="2">The number of codeML runs.</param>
+		<param name="fubar_sequence_limit" shortName="fsl" defaultValue="90">The maximum number of sequences to use in FUBAR.</param>
+		<param name="omegamap_sequence_limit" shortName="osl" defaultValue="90">The maximum number of sequences to use in OmegaMap.</param>
+		<param name="codeml_sequence_limit" shortName="csl" defaultValue="30">The maximum number of sequences to use in codeML.</param>
+		<param name="fubar_runs" shortName="fr" defaultValue="1">The number of FUBAR runs.</param>
+		<param name="omegamap_runs" shortName="or" defaultValue="1">The number of OmegaMap runs.</param>
+		<param name="codeml_runs" shortName="cr" defaultValue="1">The number of codeML runs.</param>
 		
 		<param name="mrbayes_generations" shortName="mbg" defaultValue="1000000"></param>
 		<param name="mrbayes_burnin" shortName="mbb" defaultValue="2500"></param>
@@ -433,37 +433,37 @@
 	</tasks>
 
 	<metadata>
-		<task-description id="pull-docker-images">Pulls the necessary Docker images from the pegi3s/dockerfiles project..</task-description>
+		<task-description id="pull-docker-images">Pulls the necessary Docker images from the pegi3s/dockerfiles project.</task-description>
 		<task-description id="initialization">Initialices the working directory.</task-description>
 		<task-description id="prepare-input-files">Removes stop codons and line breaks from all input files.</task-description>
-		<task-description id="gather-omegamap-run-lists">Joins all OmegaMap run lists into a single run list.</task-description>
+		<task-description id="gather-omegamap-run-lists">Joins all omegaMap run lists into a single run list.</task-description>
 		<task-description id="gather-mrbayes-run-lists">Joins all Mr. Bayes run lists into a single run list.</task-description>
 		<task-description id="gather-fubar-codeml-run-lists">Joins all FUBAR and codeML run lists into a single run list.</task-description>
 		<task-description id="gather-phipack-run-lists">Joins all phipack run lists into a single run list.</task-description>
 		<task-description id="check-input-files">Verifies if any of the input files contains ambiguous nucleotide positions or non-multiple of 3 sequences. If so, the pipeline execution is stopped and the problematic files must be manually fixed before continuing.</task-description>
-		<task-description id="rename-headers">.</task-description>
-		<task-description id="create-subset">.</task-description>
-		<task-description id="translate-dna-to-protein">.</task-description>
-		<task-description id="align-protein-sequences">.</task-description>
-		<task-description id="back-translation">.</task-description>
-		<task-description id="clustal-to-fasta">.</task-description>
-		<task-description id="rename-headers-back">.</task-description>
-		<task-description id="phipack-master-alignment">.</task-description>
-		<task-description id="check-master-alignment-recombination">.</task-description>
-		<task-description id="rename-headers-pss-subsets">.</task-description>
-		<task-description id="run-omegamap">.</task-description>
-		<task-description id="create-pss-subsets">.</task-description>
-		<task-description id="mrbayes-filter-alignment">.</task-description>
-		<task-description id="mrbayes-reconstruct-dna-files">.</task-description>
-		<task-description id="mrbayes-create-pss-subsets">.</task-description>
-		<task-description id="prepare-mrbayes-files">.</task-description>
-		<task-description id="run-mrbayes">.</task-description>
-		<task-description id="create-fubar-codeml-run-lists">.</task-description>
-		<task-description id="run-fubar">.</task-description>
-		<task-description id="check-codeml-limit">.</task-description>
-		<task-description id="run-codeml">.</task-description>
-		<task-description id="run-phipack">.</task-description>
-		<task-description id="tabulate-results">.</task-description>
+		<task-description id="rename-headers">Renames the sequence headers to be C1, C2, ..., Cn in each FASTA file.</task-description>
+		<task-description id="create-subset">Extracts a random subset of sequences according to the sequence limit specified to create the master set of sequences.</task-description>
+		<task-description id="translate-dna-to-protein">Translates each master set of sequences from DNA to protein.</task-description>
+		<task-description id="align-protein-sequences">Aligns the translated master sets of sequences.</task-description>
+		<task-description id="back-translation">Translates each aligned master set of sequences from protein to DNA. These are called master DNA alignments.</task-description>
+		<task-description id="clustal-to-fasta">Converts the master DNA alignments to FASTA format.</task-description>
+		<task-description id="rename-headers-back">Puts the original sequence headers in the master DNA aligned FASTA files.</task-description>
+		<task-description id="phipack-master-alignment">Runs phipack on each master DNA alignment.</task-description>
+		<task-description id="check-master-alignment-recombination">If the omegaMap recombination flag is present, checks the phipack results for each master DNA alignment in order to decide if omegaMap must be executed.</task-description>
+		<task-description id="rename-headers-pss-subsets">Puts the original sequence headers in the PSS subset files.</task-description>
+		<task-description id="run-omegamap">Runs omegaMap for each one of the PSS subsets.</task-description>
+		<task-description id="create-pss-subsets">Creates the PSS subsets for CodeML, omegaMap, and FUBAR, according to the number of sequences and replicas specified for each method.</task-description>
+		<task-description id="mrbayes-filter-alignment">Filters the master protein alignment to remove low confidence positions, according to the value specified.</task-description>
+		<task-description id="mrbayes-reconstruct-dna-files">Converts the filtered protein alignments to DNA.</task-description>
+		<task-description id="mrbayes-create-pss-subsets">Creates the same subsets used by CodeML, omegaMap, and FUBAR using the filtered DNA files. These are the files used by MrBayes to produce a Bayesian phylogenetic tree that is used by FUBAR and CodeML.</task-description>
+		<task-description id="prepare-mrbayes-files">Creates the MrBayes input files.</task-description>
+		<task-description id="run-mrbayes">Runs FUBAR for each one of the PSS subsets.</task-description>
+		<task-description id="create-fubar-codeml-run-lists">Creates the FUBAR and codeML run lists.</task-description>
+		<task-description id="run-fubar">Runs FUBAR for each one of the PSS subsets.</task-description>
+		<task-description id="check-codeml-limit">Checks the codeML limits.</task-description>
+		<task-description id="run-codeml">Runs codeML for each one of the PSS subsets.</task-description>
+		<task-description id="run-phipack">Runs phipack for each one of the PSS subsets.</task-description>
+		<task-description id="tabulate-results">Gathers the results of all PSS methods for each input FASTA file into a tabular format.</task-description>
 	</metadata>
 </pipeline>
 

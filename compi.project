@@ -1,4 +1,6 @@
 #
-#Wed Sep 09 16:26:23 CEST 2020
+#Mon Nov 09 11:20:54 CET 2020
+hub.pipeline.alias=ipssa
 compi.version=1.3.7
 image.name=pegi3s/ipssa
+hub.pipeline.id=5fa91806407682001ad3a1e9

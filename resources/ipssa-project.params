@@ -1,0 +1,68 @@
+#
+### General parameters ###
+#
+
+# Host working dir (mandatory)
+host_working_dir=/host/path/to/pipeline_working_dir
+
+# The maximum number of sequences to use for the master file
+sequence_limit=90
+
+# The random seed
+random_seed=3976763
+
+#
+### Alignment ###
+#
+
+# The alignment method: clustalw, muscle, kalign, t_coffee, or amap
+align_method=muscle
+
+# Minimum support value for amino acid positions in the alignment
+tcoffee_min_score=3
+
+#
+### MrBayes ###
+#
+
+# Number of iterations in MrBayes
+mrbayes_generations=1000000
+
+# MrBayes burnin
+mrbayes_burnin=2500
+
+#
+### FUBAR ###
+#
+
+# The maximum number of sequences to be used by FUBAR.
+fubar_sequence_limit=90
+
+# The number of FUBAR runs
+fubar_runs=1
+
+#
+### codeML ###
+#
+
+# The maximum number of sequences to be used by CodeML
+codeml_sequence_limit=30
+
+# The number of CodeML runs
+codeml_runs=1
+
+# The CodeML models to be run, one or more of: '1', '2', '7', and/or '8'.
+codeml_models=1 2 7 8
+
+#
+### OmegaMap ###
+#
+
+# The maximum number of sequences to use in OmegaMap
+omegamap_sequence_limit=90
+
+# The number of OmegaMap runs
+omegamap_runs=1
+
+# The number of OmegaMap iterations
+omegamap_iterations=2500
