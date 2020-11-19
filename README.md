@@ -12,17 +12,17 @@
 **IPSSA** (Integrated Positively Selected Sites Analyses) is a [Compi](https://www.sing-group.org/compi/) pipeline to automatically identify positively selected amino acid sites using three different methods, namely CodeML, omegaMap, and FUBAR. Moreover, it looks for evidence of recombination in the data.
  
 IPSSA applies the same steps to each input FASTA file separately. This process comprises:
-    1. Checking if the input FASTA file contains ambiguous nucleotide positions or non-multiple of three sequences. If so, the pipeline stops at this point and the files must be fixed.
-    2. Extract a random subset of sequences according to the sequence limit specified to create the master set of sequences.
-    3. Translate and align the master set of sequences.
-    4. The master protein alignment is then backtranslated to produce a master DNA alignment, used to:
-        4.1 Run phipack.
-        4.2 Create the PSS subsets for CodeML, omegaMap, and FUBAR, according to the number of sequences and replicas specified for each method.
-    5. The master protein alignment is also filtered to remove low confidence positions, according to the value specified. These filtered files are then converted into DNA files, which are split into the same subsets used by CodeML, omegaMap, and FUBAR. These are the files used by MrBayes to produce a Bayesian phylogenetic tree that is used by FUBAR and CodeML.
-    6. Run phipack for each one of the PSS subsets.
-    7. Run MrBayes for each one of the PSS subsets (using the filtered DNA files produced in step 5).
-    8. Run CodeML, omegaMap, and FUBAR, using their corresponding PSS subsets.
-    9. Finally, gather the results of all PSS methods into a tabular format.
+1. Checking if the input FASTA file contains ambiguous nucleotide positions or non-multiple of three sequences. If so, the pipeline stops at this point and the files must be fixed.
+2. Extract a random subset of sequences according to the sequence limit specified to create the master set of sequences.
+3. Translate and align the master set of sequences.
+4. The master protein alignment is then backtranslated to produce a master DNA alignment, used to:
+    1. Run phipack.
+    2. Create the PSS subsets for CodeML, omegaMap, and FUBAR, according to the number of sequences and replicas specified for each method.
+5. The master protein alignment is also filtered to remove low confidence positions, according to the value specified. These filtered files are then converted into DNA files, which are split into the same subsets used by CodeML, omegaMap, and FUBAR. These are the files used by MrBayes to produce a Bayesian phylogenetic tree that is used by FUBAR and CodeML.
+6. Run phipack for each one of the PSS subsets.
+7. Run MrBayes for each one of the PSS subsets (using the filtered DNA files produced in step 5).
+8. Run CodeML, omegaMap, and FUBAR, using their corresponding PSS subsets.
+9. Finally, gather the results of all PSS methods into a tabular format.
 
 # Using the IPSSA image in Linux
 In order to use the IPSSA image, create first a directory in your local file system (`ipssa_project` in the example) with the following structure: 
@@ -114,6 +114,29 @@ These are the pipeline parameters:
 - `omegamap_iterations`: The number of omegaMap iterations. the default value is `1`.
 - `omegamap_runs`: The number of independent replicas for omegaMap. The default value is `2500`.
 - `omegamap_recomb`: A flag indicating if omegaMap must be executed only if recombination is detected in the master file. By default, the flag is not present and thus omegaMap is executed (if `omegamap_iterations` > 0).
+
+# Test data
+
+The sample data is available [here](https://github.com/pegi3s/ipssa/raw/master/resources/test-data/ipssa-m-leprae.zip). Download and uncompress it, and move to the directory named `ipssa-m-leprae`, where you will find:
+
+- A directory called `ipssa-m-leprae-project`, that contains the structure described previously.
+- A file called `run.sh`, that contains the following commands (where you should adapt the `PROJECT_DIR` path) to test the pipeline:
+
+```bash
+PROJECT_DIR=/path/to/ipssa-m-leprae-project
+COMPI_NUM_TASKS=8
+
+PIPELINE_WORKING_DIR=${PROJECT_DIR}/pipeline_working_dir
+INPUT_DIR=${PROJECT_DIR}/input
+PARAMS_DIR=${PROJECT_DIR}
+
+docker run -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v ${PIPELINE_WORKING_DIR}:/working_dir -v ${INPUT_DIR}:/input -v ${PARAMS_DIR}:/params --rm pegi3s/ipssa -o --logs /working_dir/logs --num-tasks ${COMPI_NUM_TASKS} -pa /params/ipssa-project.params
+```
+
+## Running times
+
+- ≈ 207 minutes - 50 parallel tasks - Ubuntu 18.04.2 LTS, 96 CPUs (AMD EPYC™ 7401 @ 2GHz), 1TB of RAM and SSD disk.
+- ≈ 345 minutes - 16 parallel tasks - Ubuntu 18.04.3 LTS, 12 CPUs (AMD Ryzen 5 2600 @ 3.40GHz), 16GB of RAM and SSD disk.
 
 # For Developers
 
