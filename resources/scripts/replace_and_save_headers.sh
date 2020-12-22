@@ -1,4 +1,4 @@
-#/!bin/bash
+#!/bin/bash
 
 function printHelp {
   echo "Usage: `basename $0` </path/to/input_fasta> </path/to/outut/dir>"

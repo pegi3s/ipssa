@@ -10,7 +10,7 @@ for file in $(ls -A ${FILES_DIR}); do
 	ERROR_LOGS=$(mktemp /tmp/logs_${INDEX}.XXXXXXX)
 	touch ${ERROR_LOGS}
 
-	ls ${LOGS_DIR}/*_${INDEX}*log | grep -v 'run-omegamap\|prepare-mrbayes-files\|run-mrbayes\|run-fubar\|check-codeml-limit\|run-codeml\|run-phipack' | grep -e "_${INDEX}.err.log" -e "_${INDEX}.out.log" | xargs grep -l -i 'error' > ${ERROR_LOGS}
+	ls ${LOGS_DIR}/*_${INDEX}.*log | grep -v 'run-omegamap\|prepare-mrbayes-files\|run-mrbayes\|run-fubar\|check-codeml-limit\|run-codeml\|run-phipack' | grep -e "_${INDEX}.err.log" -e "_${INDEX}.out.log" | xargs grep -l -i 'error' > ${ERROR_LOGS}
 
 	while read LOG_FILE; do
 		LOG_FILENAME=$(basename -- "${LOG_FILE}")
