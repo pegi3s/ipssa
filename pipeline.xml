@@ -2,7 +2,7 @@
 
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<version>1.0.2</version>
+	<version>1.1.0</version>
 
 	<params>
 		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
@@ -61,6 +61,8 @@
 
 			mkdir -p ${working_dir}/input/1_original ${working_dir}/input/2_modified ${working_dir}/input/3_renamed_headers ${working_dir}/input/4_subsets ${working_dir}/input/5_translated ${working_dir}/input/6_aligned ${working_dir}/input/7_backtranslated ${working_dir}/input/8_master_alignment ${working_dir}/input/9_master_alignment_renamed
 
+			mkdir -p ${working_dir}/input/2_modified_excluded/1_ambiguous_positions ${working_dir}/input/2_modified_excluded/2_min_sequences
+
 			mkdir -p ${working_dir}/input/10_gapped_alignment/1_alignment ${working_dir}/input/10_gapped_alignment/2_gapped_alignment ${working_dir}/input/10_gapped_alignment/3_dna_filtered_fasta
 
 			cp ${input_dir}/* ${working_dir}/input/1_original
@@ -77,20 +79,29 @@
 		<foreach id="check-input-files" after="prepare-input-files" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
 			FILENAME=$(basename -- "${file}")
 
-			${scripts_dir}/check_ambiguous_positions.sh $file
-			if [ ! $? -eq 0 ]; then
-				echo "Error: $FILENAME contains ambiguous nucleotide positions, which are not allowed. Fix this issue and resume the pipeline execution."
-				exit 1
-			fi
-
 			docker run --rm -v ${host_working_dir}/:/data pegi3s/utilities:${version_utilities} check_multiple_3 /data/input/2_modified/$FILENAME
 			if [ ! $? -eq 0 ]; then
 				echo "Error: $FILENAME contains non-multiple of 3 sequences, which are not allowed. Fix this issue and resume the pipeline execution."
 				exit 1
 			fi
+
+			${scripts_dir}/check_ambiguous_positions.sh $file
+			if [ ! $? -eq 0 ]; then
+				echo "Warning: $FILENAME contains ambiguous nucleotide positions. Sequences are removed from this file before running the analysis."
+				mv $file ${working_dir}/input/2_modified_excluded/1_ambiguous_positions/$FILENAME
+				${scripts_dir}/remove_sequences_with_ambiguous_positions.sh ${working_dir}/input/2_modified_excluded/1_ambiguous_positions/$FILENAME $file
+			fi
+
+			# Ignore FASTA files with less than 4 sequences
+			COUNT_SEQS=$(grep '>' $file | wc -l);
+			if [ $COUNT_SEQS -lt 4 ]; then
+				mv $file ${working_dir}/input/2_modified_excluded/2_min_sequences/$FILENAME
+			fi
+
+			exit 0
 		</foreach>
 
-		<foreach id="rename-headers" after="*check-input-files" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
+		<foreach id="rename-headers" after="check-input-files" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
 			FILENAME=$(basename -- "${file}")
 			
 			${scripts_dir}/replace_and_save_headers.sh $file ${working_dir}/input/3_renamed_headers
@@ -422,7 +433,7 @@
 		<foreach id="tabulate-results" after="run-omegamap, run-codeml, run-fubar" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
 			FILENAME=$(basename -- "${file}")
 
-			rm -f ${working_dir}/pss_subsets/results/${FILENAME}
+			rm -f ${working_dir}/results/tabulated/${FILENAME}
 
 			${scripts_dir}/tabulate_results.sh ${working_dir}/pss_subsets ${FILENAME} ${working_dir}/results/tabulated/${FILENAME}
 
