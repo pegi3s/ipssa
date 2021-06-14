@@ -143,3 +143,7 @@ docker run -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v ${PIPELI
 ## Building the Docker image
 
 To build the Docker image, [`compi-dk`](https://www.sing-group.org/compi/#downloads) is required. Once you have it installed, simply run `compi-dk build` from the project directory to build the Docker image. The image will be created with the name specified in the `compi.project` file (i.e. `pegi3s/ipssa:latest`). This file also specifies the version of compi that goes into the Docker image.
+
+# References
+
+- H. López-Fernández; C. P. Vieira; P. Ferreira; P. Gouveia; F. Fdez-Riverola; M. Reboiro-Jato; J. Vieira (2021) **On the identification of clinically relevant bacterial amino acid changes at the whole genome level using Auto-PSS-Genome**. *Interdisciplinary Sciences: Computational Life Sciences*. Volume 13, pp. 334–343. [![DOI](https://img.shields.io/badge/DOI-10.1007%2Fs12539--021--00439--2-blue)](https://doi.org/10.1007/s12539-021-00439-2)
