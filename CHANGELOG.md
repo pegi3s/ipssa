@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2021-07-13
+
+### Fixed
+
+- Fix `run-mrbayes` task so that it fails when the corresponding `*.nex.con.tre` file is not created.
+
 ## [1.2.0] - 2021-04-28
 
 ### Changed

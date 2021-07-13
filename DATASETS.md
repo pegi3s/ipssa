@@ -8,6 +8,7 @@ Download, uncompress it and move to the `ipssa-m-leprae` directory, where you wi
 
 ## Compatible versions
 
+- 1.2.1
 - 1.2.0
 - 1.1.0
 - 1.0.2

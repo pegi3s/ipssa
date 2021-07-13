@@ -2,7 +2,7 @@
 
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<version>1.2.0</version>
+	<version>1.2.1</version>
 
 	<params>
 		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
@@ -334,7 +334,12 @@
 
 			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/mrbayes/${FILENAME}/:/data pegi3s/mrbayes:${version_mrbayes} mb /data/${FILENAME}.nex
 
-			${scripts_dir}/mrbayes_get_tree.sh ${FILENAME}.nex.con.tre ${FILE_PATH}/mrbayes/${FILENAME}
+			if [ ! -f "${FILE_PATH}/mrbayes/${FILENAME}/${FILENAME}.nex.con.tre" ]; then
+				echo "Error in run-mrbayes: ${FILENAME}.nex.con.tre was not created."
+				exit 1
+			else
+				${scripts_dir}/mrbayes_get_tree.sh ${FILENAME}.nex.con.tre ${FILE_PATH}/mrbayes/${FILENAME}
+			fi
 		</foreach>
 
 		<foreach id="create-fubar-codeml-run-lists" after="run-mrbayes" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">
