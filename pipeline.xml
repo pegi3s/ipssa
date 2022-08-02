@@ -2,7 +2,7 @@
 
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<version>1.2.1</version>
+	<version>1.2.2</version>
 
 	<params>
 		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
@@ -332,13 +332,15 @@
 			REPLACEMENT=$(echo "${working_dir}" | sed -e 's#\/#\\\/#g')
 			FILE_PATH_DOCKER=$(echo $FILE_PATH | sed -e "s#${REPLACEMENT}##g")
 
-			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/mrbayes/${FILENAME}/:/data pegi3s/mrbayes:${version_mrbayes} mb /data/${FILENAME}.nex
+			mv ${FILE_PATH}/mrbayes/${FILENAME}/${FILENAME}.nex ${FILE_PATH}/mrbayes/${FILENAME}/mrbayes_input.nex
 
-			if [ ! -f "${FILE_PATH}/mrbayes/${FILENAME}/${FILENAME}.nex.con.tre" ]; then
-				echo "Error in run-mrbayes: ${FILENAME}.nex.con.tre was not created."
+			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/mrbayes/${FILENAME}/:/data pegi3s/mrbayes:${version_mrbayes} mb /data/mrbayes_input.nex
+
+			if [ ! -f "${FILE_PATH}/mrbayes/${FILENAME}/mrbayes_input.nex.con.tre" ]; then
+				echo "Error in run-mrbayes: mrbayes_input.nex.con.tre was not created."
 				exit 1
 			else
-				${scripts_dir}/mrbayes_get_tree.sh ${FILENAME}.nex.con.tre ${FILE_PATH}/mrbayes/${FILENAME}
+				${scripts_dir}/mrbayes_get_tree.sh mrbayes_input.nex.con.tre ${FILE_PATH}/mrbayes/${FILENAME}
 			fi
 		</foreach>
 

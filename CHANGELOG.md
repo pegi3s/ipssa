@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2] - 2022-08-02
+
+### Fixed
+
+- Fix `run-mrbayes` task to avoid failing when very long paths are used to locate the input files.
+
 ## [1.2.1] - 2021-07-13
 
 ### Fixed
