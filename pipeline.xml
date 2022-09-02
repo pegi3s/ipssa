@@ -2,7 +2,7 @@
 
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<version>1.2.2</version>
+	<version>1.2.3</version>
 
 	<params>
 		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
@@ -409,12 +409,14 @@
 			rm -rf ${FILE_PATH}/results/${FILENAME}
 			mkdir -p ${FILE_PATH}/results/${FILENAME}
 
-			${scripts_dir}/codeml_prepare_ctl_file.sh ${FILE_PATH}/results/${FILENAME}/codeml.ctl "${codeml_models}" "/data/fasta_checked/${FILENAME}" "/tree/mrbayes/${FILENAME}/mrbayes_tree_without_branch_lengths.tre" "/data/results/${FILENAME}/${FILENAME}.codeml.out"
-			
+			${scripts_dir}/codeml_prepare_ctl_file.sh ${FILE_PATH}/results/${FILENAME}/codeml.ctl "${codeml_models}" "/data/fasta_checked/${FILENAME}" "/tree/mrbayes/${FILENAME}/mrbayes_tree_without_branch_lengths.tre" "codeml.out"
+
 			# Mount shorter file paths to avoid codeML failing due to long file paths
-			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/:/data -v ${host_working_dir}/${MR_BAYES_PATH_DOCKER}:/tree pegi3s/paml:${version_paml} /data/results/${FILENAME}/codeml.ctl
-            
-            ${scripts_dir}/codeml_process_results.sh ${FILE_PATH}/fasta_checked/${FILENAME} ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.out ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results_PSS.list
+			docker run --rm -v ${host_working_dir}/${FILE_PATH_DOCKER}/:/data -v ${host_working_dir}/${MR_BAYES_PATH_DOCKER}:/tree -w /data/results/${FILENAME} pegi3s/paml:${version_paml} codeml.ctl
+
+			mv ${FILE_PATH}/results/${FILENAME}/codeml.out ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.out
+
+			${scripts_dir}/codeml_process_results.sh ${FILE_PATH}/fasta_checked/${FILENAME} ${FILE_PATH}/results/${FILENAME}/${FILENAME}.codeml.out ${FILE_PATH}/results/${FILENAME}/${FILENAME}.results_PSS.list
 		</foreach>
 
 		<task id="gather-phipack-run-lists" after="gather-fubar-codeml-run-lists,gather-omegamap-run-lists">
