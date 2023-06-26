@@ -2,7 +2,7 @@
 
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<version>1.2.3</version>
+	<version>1.2.4</version>
 
 	<params>
 		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
@@ -142,7 +142,7 @@
 					;;
 			esac
 
-			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee /data/input/5_translated/${FILENAME} -method=${lowercase_align_method} -output=aln,fasta_aln,html -run_name /data/input/6_aligned/${FILENAME}
+			docker run --rm -v ${host_working_dir}:/data pegi3s/tcoffee:${version_tcoffee} t_coffee /data/input/5_translated/${FILENAME} -method=${lowercase_align_method} -output=aln,fasta_aln,html,score_ascii -run_name /data/input/6_aligned/${FILENAME}
 		</foreach>
 
 		<foreach id="back-translation" after="*align-protein-sequences" of="command" in="ls ${working_dir}/input/2_modified/*" as="file">

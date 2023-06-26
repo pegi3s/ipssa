@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.4] - 2023-06-22
+
+### Fixed
+
+- Add `score_ascii` to `-output` in `t_coffee` invocation of task `align-protein-sequences`.
+
 ## [1.2.3] - 2022-08-02
 
 ### Fixed
