@@ -51,7 +51,7 @@ codeml_sequence_limit=30
 # The number of CodeML runs
 codeml_runs=1
 
-# The CodeML models to be run, one or more of: '1', '2', '7', and/or '8'.
+# The CodeML models to be run, one or more of: 1, 2, 7, and/or 8.
 codeml_models=1 2 7 8
 
 #

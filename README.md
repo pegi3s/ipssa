@@ -109,7 +109,7 @@ These are the pipeline parameters:
 - `fubar_runs`: The number of independent replicas for FUBAR. The default value is `1`.
 - `codeml_sequence_limit`: The maximum number of sequences to be used by CodeML. The default value is `30`.
 - `codeml_runs`: The number of independent replicas for CodeML. The default value is `1`.
-- `codeml_models`: The CodeML models to be run, one or more of: '1', '2', '7', and/or '8'. To declare more than one model use a blank space between models. The default value is `1 2 7 8`.
+- `codeml_models`: The CodeML models to be run, one or more of: `1`, `2`, `7`, and/or `8`. To declare more than one model use a blank space between models. The default value is `1 2 7 8`.
 - `omegamap_sequence_limit`: The maximum number of sequences to be used by omegaMap. The default value is `90`.
 - `omegamap_iterations`: The number of omegaMap iterations. the default value is `1`.
 - `omegamap_runs`: The number of independent replicas for omegaMap. The default value is `2500`.
