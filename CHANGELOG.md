@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.5] - 2024-09-19
+
+### Changed
+
+- Sets fixed versions for phipack (1.0.0) and omegamap (tag `2019.06.08`).
+
 ## [1.2.4] - 2023-06-22
 
 ### Fixed
