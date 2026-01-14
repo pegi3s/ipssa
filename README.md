@@ -1,6 +1,9 @@
 # IPSSA [![license](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/pegi3s/ipssa) [![dockerhub](https://img.shields.io/badge/hub-docker-blue)](https://hub.docker.com/r/pegi3s/ipssa) [![compihub](https://img.shields.io/badge/hub-compi-blue)](https://www.sing-group.org/compihub/explore/5fa91806407682001ad3a1e9)
 > **IPSSA** (Integrated Positively Selected Sites Analyses) is a [Compi](https://www.sing-group.org/compi/) pipeline to automatically identify positively selected amino acid sites using three different methods, namely CodeML, omegaMap, and FUBAR. Moreover, it looks for evidence of recombination in the data. A Docker image is available for this pipeline in [this Docker Hub repository](https://hub.docker.com/r/pegi3s/ipssa).
 
+> [!WARNING]
+> This image runs Docker in Docker. Users that are already running Docker 29 should start using the image with the `pegi3s/ipssa:1.2.6`, while users that did not yet update their Docker version to Docker 29 should use the image with the `pegi3s/seda:1.2.5` tag. Starting with version `pegi3s/ipssa:1.2.5-docker29.0.1`, from now on, only images that are compatible with Docker 29 or above will be released. You can check your Docker version by running the command: `docker --version`.
+
 ## IPSSA repositories
 
 - [GitHub](https://github.com/pegi3s/ipssa)
