@@ -2,7 +2,7 @@
 
 <pipeline xmlns="http://www.sing-group.org/compi/pipeline-1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<version>1.2.5-docker29.0.1</version>
+	<version>1.2.6</version>
 
 	<params>
 		<param name="host_working_dir" shortName="hw" global="true">Path of the working directory in the host.</param>
@@ -32,6 +32,7 @@
 		<param name="omegamap_iterations" shortName="oi" defaultValue="2500">Number of OmegaMap iterations.</param>
 
 		<flag name="skip_pull_docker_images" shortName="sdi">Use this flag to skip the pull-docker-images task.</flag>
+		<flag name="cleanup_docker_images" shortName="cdi">Use this flag to run the cleanup-docker-images task.</flag>
 		<param name="version_utilities" shortName="vu" defaultValue="0.9.0" global="true">Version of the pegi3s/utilities to use.</param>
 		<param name="version_tcoffee" shortName="vt" defaultValue="12.00.7" global="true">Version of the pegi3s/tcoffee to use.</param>
 		<param name="version_alter" shortName="va" defaultValue="1.3.4" global="true">Version of the pegi3s/alter to use.</param>
@@ -450,6 +451,19 @@
 			export VERSION_PEGI3S_UTILITIES=${version_utilities}
 			${scripts_dir}/results_get_gaps_and_support_values.sh ${FILENAME} ${working_dir} ${host_working_dir}
 		</foreach>
+
+		<task id="cleanup-docker-images" params="cleanup_docker_images" if="[ ! -v ${cleanup_docker_images} ]">
+			echo "Cleaning up Docker images..."
+			docker rmi pegi3s/utilities:${version_utilities}
+			docker rmi pegi3s/tcoffee:${version_tcoffee}
+			docker rmi pegi3s/alter:${version_alter}
+			docker rmi pegi3s/seqkit:${version_seqkit}
+			docker rmi pegi3s/mrbayes:${version_mrbayes}
+			docker rmi pegi3s/phipack:${version_phipack}
+			docker rmi pegi3s/omegamap:${version_omegamap}
+			docker rmi pegi3s/hyphy:${version_hyphy}
+			docker rmi pegi3s/paml:${version_paml}
+		</task>
 	</tasks>
 
 	<metadata>
@@ -484,6 +498,7 @@
 		<task-description id="run-codeml">Runs codeML for each one of the PSS subsets.</task-description>
 		<task-description id="run-phipack">Runs phipack for each one of the PSS subsets.</task-description>
 		<task-description id="tabulate-results">Gathers the results of all PSS methods for each input FASTA file into a tabular format.</task-description>
+		<task-description id="cleanup-docker-images">Removes the downloaded Docker images from the pegi3s/dockerfiles project (requires including the 'cleanup_docker_images' flag).</task-description>
 	</metadata>
 </pipeline>
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.6] - 2026-01-14
+
+### Added
+
+- Adds task `cleanup-docker-images`.
+
 ## [1.2.5-docker29.0.1] - 2026-01-14
 
 ### Docker
