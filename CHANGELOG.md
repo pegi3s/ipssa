@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.5-docker29.0.1] - 2026-01-14
+
+### Docker
+
+- Updates Docker base image to `pegi3s/docker:29.0.1` without modifying the source code.
+
 ## [1.2.5] - 2024-09-19
 
 ### Changed

@@ -1,4 +1,4 @@
-FROM pegi3s/docker
+FROM pegi3s/docker:29.0.1
 
 LABEL maintainer="hlfernandez"
 
@@ -15,5 +15,3 @@ COPY resources/ipssa-project.params /resources/ipssa-project.params
 ADD pipeline.xml /pipeline.xml
 
 ENTRYPOINT ["/compi", "run",  "-p", "/pipeline.xml"]
-
-
